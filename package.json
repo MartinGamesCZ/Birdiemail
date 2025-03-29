@@ -1,0 +1,14 @@
+{
+  "name": "birdiemail",
+  "module": ".",
+  "type": "module",
+  "workspace": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
