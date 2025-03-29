@@ -12,5 +12,5 @@ export default function Page() {
     })();
   }, []);
 
-  return <p></p>;
+  return <p>Hello, World!</p>;
 }
