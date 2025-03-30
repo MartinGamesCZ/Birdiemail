@@ -1,12 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toggleTheme } from "@/providers/ThemeProvider";
 
 export default function Page() {
-  return (
-    <Button variant="primary" size="default" onClick={() => toggleTheme()}>
-      Toggle theme
-    </Button>
-  );
+  // TODO: Implement
+  return <p>Sign in</p>;
 }

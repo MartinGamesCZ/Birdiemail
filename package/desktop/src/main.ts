@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 //import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -22,6 +22,7 @@ function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, "electron-vite.svg"),
     webPreferences: {
+      devTools: true,
       preload: path.join(__dirname, "preload.mjs"),
     },
   });
@@ -29,6 +30,14 @@ function createWindow() {
   win.setMenu(null);
   win.setTitle("Birdiemail");
   win.maximize();
+
+  ipcMain.on("dev.devtools.open", () => {
+    win?.webContents.openDevTools({ mode: "detach" });
+  });
+
+  globalShortcut.register("CommandOrControl+Shift+I", () => {
+    win?.loadURL("http://localhost:3001/dev");
+  });
 
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
