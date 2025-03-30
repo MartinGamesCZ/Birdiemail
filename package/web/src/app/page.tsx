@@ -1,16 +1,8 @@
-"use client";
-
+import { redirect } from "next/navigation";
 import { trpc } from "../server/trpc";
-import { useEffect } from "react";
 
-export default function Page() {
-  useEffect(() => {
-    (async () => {
-      const data = await trpc.appRouter.hello.query();
+export default async function Page() {
+  const data = await trpc.userRouter.isLoggedIn.query();
 
-      console.log(data);
-    })();
-  }, []);
-
-  return <p>Hello, World!</p>;
+  if (!data.loggedIn) return redirect("/auth/signin");
 }

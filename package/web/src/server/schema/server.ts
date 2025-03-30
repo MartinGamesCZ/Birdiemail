@@ -9,6 +9,11 @@ const appRouter = t.router({
     hello: publicProcedure.output(z.object({
       hello: z.string(),
     })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+  }),
+  userRouter: t.router({
+    isLoggedIn: publicProcedure.output(z.object({
+      loggedIn: z.boolean(),
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })
 });
 export type AppRouter = typeof appRouter;
