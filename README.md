@@ -1,1 +1,3 @@
-# Next.JS + Nest.JS + tRPC Starter
+# Birdiemail
+
+Mail client ready for the future.
