@@ -1,2 +1,52 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
+
+.app-drag-container {
+  app-region: drag;
+}
+
+.no-app-container {
+  app-region: none;
+}
+
+.hwt {
+  height: calc(100vh - 40px);
+}
+
+/* Modern Light Scrollbar - Rounded with no track bg */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #666666;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #888888;
+}
+
+.dark * {
+  scrollbar-color: #666666 transparent;
+}

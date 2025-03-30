@@ -4,6 +4,7 @@ import { TRPCModule } from 'nestjs-trpc';
 import { AppRouter } from './app.router';
 import { DevController } from '../dev.controller';
 import { UserModule } from '../user/user.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { UserModule } from '../user/user.module';
       autoSchemaFile: '../web/src/server/schema',
     }),
     UserModule,
+    MailModule,
   ],
   controllers: [DevController],
   providers: [AppService, AppRouter],

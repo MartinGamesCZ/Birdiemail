@@ -7,13 +7,13 @@
 services:
   web:
     tty: true
-    image: oven/bun
+    image: node:20
     volumes:
       - ./package:/app
     ports:
       - "3001:3000"
     working_dir: /app/web
-    command: ["bun", "run", "dev"]
+    command: ["npm", "run", "dev"]
     restart: always
     env_file:
       - .env
@@ -23,13 +23,13 @@ services:
 
   backend:
     tty: true
-    image: oven/bun
+    image: node:20
     volumes:
       - ./package:/app
     ports:
       - "3000:3000"
     working_dir: /app/backend
-    command: ["bun", "run", "start:dev"]
+    command: ["npm", "run", "start:dev"]
     restart: always
     env_file:
       - .env

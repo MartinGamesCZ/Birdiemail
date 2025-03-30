@@ -25,6 +25,7 @@ function createWindow() {
       devTools: true,
       preload: path.join(__dirname, "preload.mjs"),
     },
+    titleBarStyle: "hidden",
   });
 
   win.setMenu(null);
@@ -33,6 +34,22 @@ function createWindow() {
 
   ipcMain.on("dev.devtools.open", () => {
     win?.webContents.openDevTools({ mode: "detach" });
+  });
+
+  ipcMain.on("win.close", () => {
+    win?.close();
+  });
+
+  ipcMain.on("win.minimize", () => {
+    win?.minimize();
+  });
+
+  ipcMain.on("win.maximize", () => {
+    win?.maximize();
+  });
+
+  ipcMain.on("win.restore", () => {
+    win?.restore();
   });
 
   globalShortcut.register("CommandOrControl+Shift+I", () => {

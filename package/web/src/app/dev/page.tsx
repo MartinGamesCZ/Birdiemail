@@ -9,7 +9,7 @@ export default function Page() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col gap-4 h-screen w-full items-center justify-center">
+    <div className="flex flex-col gap-4 h-full w-full items-center justify-center">
       <p>Birdiemail Developer tools</p>
       <Button
         variant="primary"

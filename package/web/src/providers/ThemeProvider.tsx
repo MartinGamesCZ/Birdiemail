@@ -1,11 +1,21 @@
 "use client";
 
+import { Titlebar } from "@/components/desktop/titlebar";
 import { useEffect, useState } from "react";
 
+declare const appIsElectron: boolean;
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [isElectron, setIsElectron] = useState(false);
   const [theme, setTheme] = useState(
     typeof window !== "undefined" ? localStorage.getItem("theme") : "light"
   );
+
+  useEffect(() => {
+    if (typeof appIsElectron === "boolean") {
+      setIsElectron(appIsElectron);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window == "undefined") return;
@@ -24,12 +34,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={
-        "dark:bg-black bg-white text-gray-900 dark:text-gray-100 w-screen h-screen transition-colors theme-provider " +
+        "dark:bg-black bg-white text-gray-900 dark:text-gray-100 w-screen h-screen overflow-hidden transition-colors theme-provider " +
         theme
       }
       suppressHydrationWarning
     >
-      {children}
+      {isElectron && <Titlebar />}
+      <div suppressHydrationWarning className={isElectron ? "hwt" : "h-screen"}>
+        {children}
+      </div>
     </div>
   );
 }
