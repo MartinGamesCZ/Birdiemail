@@ -5,6 +5,7 @@ import { CalendarDaysIcon, ClockIcon } from "@heroicons/react/24/outline";
 import { Avatar } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
+import { formatMailDate } from "@/utils/dateparser";
 
 const Box = {
   title: "Inbox",
@@ -76,8 +77,11 @@ export default function Mailbox(props: {
                             ? message.sender.name
                             : message.sender.email}
                         </p>
-                        <p className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                          10:30 AM
+                        <p
+                          className="text-xs text-gray-500 flex-shrink-0 ml-2"
+                          suppressHydrationWarning
+                        >
+                          {formatMailDate(message.date)}
                         </p>
                       </div>
                       <h2 className="text-lg font-semibold truncate">

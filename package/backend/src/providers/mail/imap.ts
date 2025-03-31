@@ -1,4 +1,7 @@
 import { ImapFlow } from 'imapflow';
+import { extract } from 'letterparser';
+import { JSDOM } from 'jsdom';
+import { convert } from 'html-to-text';
 
 export class Imap {
   private readonly host: string;
@@ -74,14 +77,32 @@ export class Imap {
         }[] = [];
 
         for await (const msg of msgs) {
+          const data = extract(msg.source.toString());
+
+          let preview = convert(data.html ?? data.text ?? '', {
+            selectors: [
+              {
+                selector: 'a',
+                format: 'skip',
+              },
+              {
+                selector: 'img',
+                format: 'skip',
+              },
+            ],
+          })
+            .replace(/[\n\r]/g, ' ')
+            .trim()
+            .substring(0, 120);
+
           result.push({
             id: msg.uid.toString() ?? '',
-            subject: msg.envelope.subject,
+            subject: data.subject ?? '',
             sender: {
-              name: msg.envelope.from[0].name ?? '',
-              email: msg.envelope.from[0].address ?? '',
+              name: data.from?.name ?? '',
+              email: data.from?.address ?? '',
             },
-            body: msg.source.toString().substring(0, 120),
+            body: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
             date: msg.envelope.date ?? new Date(0),
           });
         }
