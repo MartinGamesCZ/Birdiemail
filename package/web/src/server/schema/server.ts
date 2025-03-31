@@ -36,13 +36,32 @@ const appRouter = t.router({
         status: z.literal('ok'),
         data: z.object({
           token: z.string(),
+          encryptionKey: z.string(),
         }),
       }),
       z.object({
         status: z.literal('error'),
         message: z.string(),
       }),
-    ])).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    ])).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    addMailAccount: publicProcedure.input(z.object({
+      email: z.string(),
+      password: z.string(),
+      name: z.string(),
+      imap_host: z.string(),
+      imap_port: z.number(),
+      smtp_host: z.string(),
+      smtp_port: z.number(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({
     getMail: publicProcedure.output(z.array(

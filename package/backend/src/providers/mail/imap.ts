@@ -26,7 +26,7 @@ export class Imap {
     this.connection = new ImapFlow({
       host: this.host,
       port: Number(this.port),
-      secure: false,
+      secure: true,
       auth: {
         user: this.user,
         pass: this.password,

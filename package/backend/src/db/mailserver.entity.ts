@@ -19,12 +19,17 @@ export class MailServerEntity {
   @Column({
     length: 128,
   })
-  address: string;
+  imapAddress: string;
 
   @Column({
     length: 8,
   })
   imapPort: string;
+
+  @Column({
+    length: 128,
+  })
+  smtpAddress: string;
 
   @Column({
     length: 8,

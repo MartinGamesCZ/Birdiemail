@@ -11,6 +11,8 @@ export const trpc = createTRPCProxyClient<AppRouter>({
       async headers() {
         return {
           Authorization: (await getCookie("session_token")) ?? "",
+          "X-Birdiemail-Encryption-Key":
+            (await getCookie("encryption_key")) ?? "",
         };
       },
     }),

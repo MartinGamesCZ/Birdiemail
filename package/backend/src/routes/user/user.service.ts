@@ -2,10 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { compareSync, hashSync } from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { Repo } from 'src/db/_index';
+import { UserEntity } from 'src/db/user.entity';
+import { Imap } from 'src/providers/mail/imap';
 import { Response } from 'src/types/response/_index';
-import { createUserToken, decodeUserToken } from 'src/utils/encryption';
+import {
+  createUserToken,
+  decodeUserToken,
+  encryptMailPassword,
+  getMailPasswordEncryptionKey,
+} from 'src/utils/encryption';
 import { ErrorResponse, OkResponse } from 'src/utils/response';
-import { isEmail, isStrongPassword } from 'validator';
+import { isEmail, isPort, isStrongPassword } from 'validator';
 
 @Injectable()
 export class UserService {
@@ -84,6 +91,99 @@ export class UserService {
 
     return OkResponse({
       token: token,
+      encryptionKey: getMailPasswordEncryptionKey(user.id, password),
+    });
+  }
+
+  async addMailAccount(
+    name: string,
+    email: string,
+    password: string,
+    imap_host: string,
+    imap_port: number,
+    smtp_host: string,
+    smtp_port: number,
+    user: UserEntity,
+    encryptionKey: string,
+  ) {
+    if (!name || name.length < 3 || name.length > 128)
+      return ErrorResponse('Invalid name');
+    if (!isEmail(email)) return ErrorResponse('Invalid email address');
+    if (!password) return ErrorResponse('Invalid password');
+    if (!isPort(imap_port.toString()))
+      return ErrorResponse('Invalid IMAP port');
+    if (!isPort(smtp_port.toString()))
+      return ErrorResponse('Invalid SMTP port');
+    if (!imap_host || imap_host.length < 3 || imap_host.length > 128)
+      return ErrorResponse('Invalid IMAP host');
+    if (!smtp_host || smtp_host.length < 3 || smtp_host.length > 128)
+      return ErrorResponse('Invalid SMTP host');
+
+    // Try if credentials are valid
+    const imap = await Imap.connect({
+      host: imap_host,
+      port: imap_port.toString(),
+      user: email,
+      password: password,
+    }).catch((e) => '@err');
+
+    if (typeof imap == 'string' && imap == '@err')
+      return ErrorResponse('Invalid IMAP credentials');
+
+    // TODO: Add SMTP credentials check
+
+    let mailServer = await Repo.mailServer.findOne({
+      where: {
+        imapAddress: imap_host,
+        imapPort: imap_port.toString(),
+        smtpAddress: smtp_host,
+        smtpPort: smtp_port.toString(),
+      },
+    });
+
+    if (!mailServer) {
+      mailServer = Repo.mailServer.create({
+        id: randomUUID(),
+        imapAddress: imap_host,
+        imapPort: imap_port.toString(),
+        smtpAddress: smtp_host,
+        smtpPort: smtp_port.toString(),
+      });
+
+      const data = await Repo.mailServer.save(mailServer).catch((e) => ({
+        error: e.message,
+      }));
+      if ('error' in data) return ErrorResponse(data.error);
+    }
+
+    const mailAccountExists = await Repo.mailAccount.exists({
+      where: {
+        email: email,
+        password: password,
+        mailServer: {
+          id: mailServer.id,
+        },
+        user: user,
+      },
+    });
+    if (mailAccountExists) return ErrorResponse('Mail account already added');
+
+    const mailAccount = Repo.mailAccount.create({
+      id: randomUUID(),
+      name: name,
+      email: email,
+      password: encryptMailPassword(encryptionKey, password),
+      user: user,
+      mailServer: mailServer,
+    });
+
+    const data = await Repo.mailAccount.save(mailAccount).catch((e) => ({
+      error: e.message,
+    }));
+    if ('error' in data) return ErrorResponse(data.error);
+
+    return OkResponse({
+      id: data.id,
     });
   }
 

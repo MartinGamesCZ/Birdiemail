@@ -38,6 +38,9 @@ export default function Page() {
     Cookies.set("session_token", res.data.token, {
       expires: rememberMe ? 30 : undefined,
     });
+    Cookies.set("encryption_key", res.data.encryptionKey, {
+      expires: rememberMe ? 30 : undefined,
+    });
 
     router.push("/mail");
 

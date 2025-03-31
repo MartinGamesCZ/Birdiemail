@@ -32,6 +32,9 @@ export class MailAccountEntity {
   @Column({ length: 128 })
   name: string;
 
+  @Column({ length: 128 })
+  email: string;
+
   @Column({ length: 255 })
   password: string;
 
