@@ -13,7 +13,36 @@ const appRouter = t.router({
   userRouter: t.router({
     isLoggedIn: publicProcedure.output(z.object({
       loggedIn: z.boolean(),
-    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    signup: publicProcedure.input(z.object({
+      email: z.string(),
+      password: z.string(),
+      name: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    signin: publicProcedure.input(z.object({
+      email: z.string(),
+      password: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({
+          token: z.string(),
+        }),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({
     getMail: publicProcedure.output(z.array(

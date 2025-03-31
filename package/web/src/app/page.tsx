@@ -5,4 +5,6 @@ export default async function Page() {
   const data = await trpc.userRouter.isLoggedIn.query();
 
   if (!data.loggedIn) return redirect("/auth/signin");
+
+  return redirect("/mail");
 }

@@ -4,28 +4,40 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import {
+  EnvelopeIcon,
+  LockClosedIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { trpc } from "@/server/trpc";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 
 export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password != confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
     setIsLoading(true);
 
-    const res = await trpc.userRouter.signin.query({
+    const res = await trpc.userRouter.signup.mutate({
       email,
       password,
+      name,
     });
 
     if (res.status == "error") {
@@ -35,17 +47,11 @@ export default function Page() {
       return;
     }
 
-    Cookies.set("session_token", res.data.token, {
-      expires: rememberMe ? 30 : undefined,
-    });
-
-    router.push("/mail");
-
-    setIsLoading(false);
+    router.push("/auth/signedup");
   };
 
-  const handleSocialSignIn = (provider: string) => {
-    // TODO: implement social sign-in logic
+  const handleSocialSignUp = (provider: string) => {
+    // TODO: implement social sign-up logic
   };
 
   return (
@@ -62,10 +68,22 @@ export default function Page() {
 
         <Card className="shadow-lg">
           <CardHeader className="text-xl font-semibold text-center">
-            Sign in
+            Sign up
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  label="Name"
+                  type="text"
+                  placeholder="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  leftIcon={<UserIcon className="h-5 w-5" />}
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Input
                   label="Email"
@@ -91,30 +109,49 @@ export default function Page() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-4 w-4 rounded cursor-pointer border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
-                  />
-                  <label
-                    htmlFor="remember-me"
-                    className="ml-2 cursor-pointer block text-sm text-gray-700 dark:text-gray-300"
-                  >
-                    Remember me
-                  </label>
-                </div>
+              <div className="space-y-2">
+                <Input
+                  label="Confirm Password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  leftIcon={<LockClosedIcon className="h-5 w-5" />}
+                  required
+                />
+              </div>
 
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms"
+                    name="terms"
+                    type="checkbox"
+                    checked={acceptTerms}
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    className="h-4 w-4 rounded cursor-pointer border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800"
+                    required
+                  />
+                </div>
+                <label
+                  htmlFor="terms"
+                  className="ml-2 cursor-pointer block text-sm text-gray-700 dark:text-gray-300"
                 >
-                  Forgot password?
-                </Link>
+                  I accept the{" "}
+                  <Link
+                    href="/terms"
+                    className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                  >
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    href="/privacy"
+                    className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+                  >
+                    Privacy Policy
+                  </Link>
+                </label>
               </div>
 
               <Button
@@ -122,8 +159,9 @@ export default function Page() {
                 variant="primary"
                 className="w-full"
                 isLoading={isLoading}
+                disabled={!acceptTerms}
               >
-                Sign in
+                Sign up
               </Button>
             </form>
 
@@ -143,9 +181,9 @@ export default function Page() {
                 type="button"
                 variant="outline"
                 className="w-full transition-all duration-200 hover:border-blue-400 hover:bg-blue-50 dark:hover:border-blue-500/70 dark:hover:bg-blue-900/20"
-                onClick={() => handleSocialSignIn("google")}
+                onClick={() => handleSocialSignUp("google")}
               >
-                <span className="sr-only">Sign in with Google</span>
+                <span className="sr-only">Sign up with Google</span>
                 <svg
                   className="h-5 w-5"
                   xmlns="http://www.w3.org/2000/svg"
@@ -173,9 +211,9 @@ export default function Page() {
                 type="button"
                 variant="outline"
                 className="w-full transition-all duration-200 hover:border-blue-400 hover:bg-blue-50 dark:hover:border-blue-500/70 dark:hover:bg-blue-900/20"
-                onClick={() => handleSocialSignIn("discord")}
+                onClick={() => handleSocialSignUp("discord")}
               >
-                <span className="sr-only">Sign in with Discord</span>
+                <span className="sr-only">Sign up with Discord</span>
                 <svg
                   className="h-5 w-5"
                   xmlns="http://www.w3.org/2000/svg"
@@ -191,9 +229,9 @@ export default function Page() {
                 type="button"
                 variant="outline"
                 className="w-full transition-all duration-200 hover:border-blue-400 hover:bg-blue-50 dark:hover:border-blue-500/70 dark:hover:bg-blue-900/20"
-                onClick={() => handleSocialSignIn("microsoft")}
+                onClick={() => handleSocialSignUp("microsoft")}
               >
-                <span className="sr-only">Sign in with Microsoft</span>
+                <span className="sr-only">Sign up with Microsoft</span>
                 <svg
                   className="h-5 w-5"
                   xmlns="http://www.w3.org/2000/svg"
@@ -209,13 +247,13 @@ export default function Page() {
 
             <div className="mt-6 text-center text-sm">
               <span className="text-gray-600 dark:text-gray-400">
-                Don&apos;t have an account?
+                Already have an account?
               </span>{" "}
               <Link
-                href="/auth/signup"
+                href="/auth/signin"
                 className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
               >
-                Sign up
+                Sign in
               </Link>
             </div>
           </CardContent>

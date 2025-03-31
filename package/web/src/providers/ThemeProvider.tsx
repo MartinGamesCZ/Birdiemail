@@ -58,3 +58,14 @@ export function toggleTheme() {
     document.querySelector(".theme-provider")!.classList.add("dark");
   }
 }
+
+export function setTheme(theme: "dark" | "light") {
+  localStorage.setItem("theme", theme);
+  document
+    .querySelector(".theme-provider")!
+    .classList.toggle("dark", theme === "dark");
+}
+
+export function getTheme() {
+  return localStorage.getItem("theme") || "light";
+}
