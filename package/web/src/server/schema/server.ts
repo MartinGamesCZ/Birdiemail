@@ -50,8 +50,10 @@ const appRouter = t.router({
       name: z.string(),
       imap_host: z.string(),
       imap_port: z.number(),
+      imap_secure: z.boolean(),
       smtp_host: z.string(),
       smtp_port: z.number(),
+      smtp_secure: z.boolean(),
     })).output(z.union([
       z.object({
         status: z.literal('ok'),
@@ -61,10 +63,32 @@ const appRouter = t.router({
         status: z.literal('error'),
         message: z.string(),
       }),
-    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    getMailAccounts: publicProcedure.output(z.array(
+      z.object({
+        id: z.string(),
+        email: z.string(),
+        name: z.string(),
+        mailServer: z.object({
+          id: z.string(),
+          imapAddress: z.string(),
+          imapPort: z.string(),
+          imapSecure: z.boolean(),
+          smtpAddress: z.string(),
+          smtpPort: z.string(),
+          smtpSecure: z.boolean(),
+          createdAt: z.date(),
+          updatedAt: z.date(),
+        }),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      }),
+    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({
-    getMail: publicProcedure.output(z.array(
+    getMail: publicProcedure.input(z.object({
+      accountId: z.string(),
+    })).output(z.array(
       z.object({
         id: z.string(),
         subject: z.string(),
@@ -75,7 +99,7 @@ const appRouter = t.router({
         body: z.string(),
         date: z.date(),
       }),
-    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })
 });
 export type AppRouter = typeof appRouter;

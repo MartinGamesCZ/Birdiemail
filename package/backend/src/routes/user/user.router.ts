@@ -82,8 +82,10 @@ export class UserRouter {
       name: z.string(),
       imap_host: z.string(),
       imap_port: z.number(),
+      imap_secure: z.boolean(),
       smtp_host: z.string(),
       smtp_port: z.number(),
+      smtp_secure: z.boolean(),
     }),
     output: z.union([
       z.object({
@@ -104,14 +106,14 @@ export class UserRouter {
       name: string;
       imap_host: string;
       imap_port: number;
+      imap_secure: boolean;
       smtp_host: string;
       smtp_port: number;
+      smtp_secure: boolean;
     },
     @Ctx() context: any,
   ) {
     if (!context.authorized) return ErrorResponse('Unauthorized');
-
-    console.log(context.headers);
 
     return await this.userService.addMailAccount(
       data.name,
@@ -119,10 +121,41 @@ export class UserRouter {
       data.password,
       data.imap_host,
       data.imap_port,
+      data.imap_secure,
       data.smtp_host,
       data.smtp_port,
+      data.smtp_secure,
       context.user,
-      context.headers['x-birdiemail-encryption-key'],
+      context.encryptionKey,
     );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Query({
+    output: z.array(
+      z.object({
+        id: z.string(),
+        email: z.string(),
+        name: z.string(),
+        mailServer: z.object({
+          id: z.string(),
+          imapAddress: z.string(),
+          imapPort: z.string(),
+          imapSecure: z.boolean(),
+          smtpAddress: z.string(),
+          smtpPort: z.string(),
+          smtpSecure: z.boolean(),
+          createdAt: z.date(),
+          updatedAt: z.date(),
+        }),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      }),
+    ),
+  })
+  async getMailAccounts(@Ctx() context: any) {
+    if (!context.authorized) return ErrorResponse('Unauthorized');
+
+    return await this.userService.getMailAccounts(context.user);
   }
 }

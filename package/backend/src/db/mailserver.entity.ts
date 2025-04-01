@@ -26,6 +26,9 @@ export class MailServerEntity {
   })
   imapPort: string;
 
+  @Column()
+  imapSecure: boolean;
+
   @Column({
     length: 128,
   })
@@ -35,6 +38,9 @@ export class MailServerEntity {
     length: 8,
   })
   smtpPort: string;
+
+  @Column()
+  smtpSecure: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

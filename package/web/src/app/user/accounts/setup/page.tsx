@@ -16,44 +16,45 @@ import {
 import { trpc } from "@/server/trpc";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Common email providers configuration
 const emailProviders = [
   {
     name: "Gmail",
     domain: "gmail.com",
-    imap: { host: "imap.gmail.com", port: 993 },
-    smtp: { host: "smtp.gmail.com", port: 587 },
+    imap: { host: "imap.gmail.com", port: 993, secure: true },
+    smtp: { host: "smtp.gmail.com", port: 587, secure: true },
   },
   {
     name: "Seznam.cz",
     domain: "seznam.cz",
-    imap: { host: "imap.seznam.cz", port: 993 },
-    smtp: { host: "smtp.seznam.cz", port: 465 },
-  },
-  /*{
-    name: "Outlook",
-    domain: "outlook.com",
-    imap: { host: "outlook.office365.com", port: 993 },
-    smtp: { host: "smtp.office365.com", port: 587 },
+    imap: { host: "imap.seznam.cz", port: 993, secure: true },
+    smtp: { host: "smtp.seznam.cz", port: 465, secure: true },
   },
   {
+    name: "Outlook",
+    domain: "outlook.com",
+    imap: { host: "outlook.office365.com", port: 993, secure: true },
+    smtp: { host: "smtp.office365.com", port: 587, secure: true },
+  },
+  /*{
     name: "Yahoo",
     domain: "yahoo.com",
-    imap: { host: "imap.mail.yahoo.com", port: 993 },
-    smtp: { host: "smtp.mail.yahoo.com", port: 465 },
+    imap: { host: "imap.mail.yahoo.com", port: 993, secure: true },
+    smtp: { host: "smtp.mail.yahoo.com", port: 465, secure: true },
   },
   {
     name: "ProtonMail",
     domain: "protonmail.com",
-    imap: { host: "imap.protonmail.ch", port: 993 },
-    smtp: { host: "smtp.protonmail.ch", port: 587 },
+    imap: { host: "imap.protonmail.ch", port: 993, secure: true },
+    smtp: { host: "smtp.protonmail.ch", port: 587, secure: true },
   },*/
   {
     name: "Custom",
     domain: "",
-    imap: { host: "", port: 993 },
-    smtp: { host: "", port: 587 },
+    imap: { host: "", port: 993, secure: true },
+    smtp: { host: "", port: 587, secure: true },
   },
 ];
 
@@ -64,8 +65,10 @@ export default function SetupEmailAccountPage() {
     password: "",
     imapHost: "",
     imapPort: 993,
+    imapSecure: true,
     smtpHost: "",
     smtpPort: 587,
+    smtpSecure: true,
     selectedProvider: "Custom",
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -91,8 +94,10 @@ export default function SetupEmailAccountPage() {
         selectedProvider: provider.name,
         imapHost: provider.imap.host,
         imapPort: provider.imap.port,
+        imapSecure: provider.imap.secure,
         smtpHost: provider.smtp.host,
         smtpPort: provider.smtp.port,
+        smtpSecure: provider.smtp.secure,
       }));
     }
   };
@@ -105,10 +110,16 @@ export default function SetupEmailAccountPage() {
         selectedProvider: value,
         imapHost: provider.imap.host,
         imapPort: provider.imap.port,
+        imapSecure: provider.imap.secure,
         smtpHost: provider.smtp.host,
         smtpPort: provider.smtp.port,
+        smtpSecure: provider.smtp.secure,
       }));
     }
+  };
+
+  const handleCheckboxChange = (name: string, checked: boolean) => {
+    setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -122,9 +133,11 @@ export default function SetupEmailAccountPage() {
       email: formData.email,
       password: formData.password,
       imap_host: formData.imapHost,
-      imap_port: formData.imapPort,
+      imap_port: Number(formData.imapPort),
+      imap_secure: formData.imapSecure,
       smtp_host: formData.smtpHost,
-      smtp_port: formData.smtpPort,
+      smtp_port: Number(formData.smtpPort),
+      smtp_secure: formData.smtpSecure,
     });
 
     if (data.status == "error") {
@@ -228,6 +241,18 @@ export default function SetupEmailAccountPage() {
                       required
                     />
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="imapSecure"
+                      checked={formData.imapSecure}
+                      onCheckedChange={(checked: any) =>
+                        handleCheckboxChange("imapSecure", checked as boolean)
+                      }
+                    />
+                    <Label htmlFor="imapSecure">
+                      Use secure connection (SSL/TLS)
+                    </Label>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -253,6 +278,18 @@ export default function SetupEmailAccountPage() {
                       onChange={handleChange}
                       required
                     />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="smtpSecure"
+                      checked={formData.smtpSecure}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange("smtpSecure", checked as boolean)
+                      }
+                    />
+                    <Label htmlFor="smtpSecure">
+                      Use secure connection (SSL/TLS)
+                    </Label>
                   </div>
                 </div>
               </div>

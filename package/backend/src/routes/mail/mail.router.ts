@@ -1,12 +1,22 @@
-import { Query, Router } from 'nestjs-trpc';
+import { Ctx, Input, Query, Router, UseMiddlewares } from 'nestjs-trpc';
 import { Imap } from 'src/providers/mail/imap';
 import { z } from 'zod';
+import { AuthMiddleware } from '../auth.middleware';
+import { Inject } from '@nestjs/common';
+import { MailService } from './mail.service';
 
 @Router()
 export class MailRouter {
-  private readonly connections = new Map<string, Imap>();
+  constructor(
+    @Inject(MailService)
+    private readonly mailService: MailService,
+  ) {}
 
+  @UseMiddlewares(AuthMiddleware)
   @Query({
+    input: z.object({
+      accountId: z.string(),
+    }),
     output: z.array(
       z.object({
         id: z.string(),
@@ -20,27 +30,11 @@ export class MailRouter {
       }),
     ),
   })
-  async getMail() {
-    const imap = await this.establishConnection('martin');
-
-    return await (await imap.mailbox('INBOX')).list();
-  }
-
-  private async establishConnection(id: string) {
-    let connection = this.connections.get(id);
-
-    if (!connection)
-      connection = await Imap.connect({
-        host: 'xxxxxxxxxx',
-        port: '143',
-        user: 'xxxxxxxxx',
-        password: 'xxxxxxxxxxxx',
-      });
-
-    if (!connection.isConnected()) await connection.connect();
-
-    this.connections.set(id, connection);
-
-    return connection;
+  async getMail(@Ctx() context: any, @Input() data: { accountId: string }) {
+    return await this.mailService.getMail(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+    );
   }
 }

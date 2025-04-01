@@ -1,4 +1,4 @@
-import { createCipheriv, hash, randomBytes } from 'crypto';
+import { createCipheriv, createDecipheriv, hash, randomBytes } from 'crypto';
 import { sign, verify } from 'jsonwebtoken';
 
 export function createUserToken(id: string, hash: string) {
@@ -39,14 +39,12 @@ export function getMailPasswordEncryptionKey(userId: string, password: string) {
 
 export function encryptMailPassword(key: string, password: string) {
   const iv = randomBytes(16);
-
   const keyBuffer = Buffer.from(
     key.length === 64 ? key : hash('sha256', key, 'hex'),
     'hex',
   ).slice(0, 32);
 
   const cipher = createCipheriv('aes-256-cbc', keyBuffer, iv);
-
   let encrypted = cipher.update(password, 'utf8', 'hex');
   encrypted += cipher.final('hex');
 
@@ -54,19 +52,24 @@ export function encryptMailPassword(key: string, password: string) {
 }
 
 export function decryptMailPassword(key: string, password: string) {
-  const parts = password.split(':');
-  const iv = Buffer.from(parts.shift()!, 'hex');
-  const encryptedText = Buffer.from(parts.join(':'), 'hex');
+  try {
+    if (!password || !password.includes(':')) return '';
 
-  const keyBuffer = Buffer.from(
-    key.length === 64 ? key : hash('sha256', key, 'hex'),
-    'hex',
-  ).slice(0, 32);
+    const [ivHex, encryptedText] = password.split(':', 2);
+    if (!ivHex || !encryptedText) return '';
 
-  const decipher = createCipheriv('aes-256-cbc', keyBuffer, iv);
+    const iv = Buffer.from(ivHex, 'hex');
+    const keyBuffer = Buffer.from(
+      key.length === 64 ? key : hash('sha256', key, 'hex'),
+      'hex',
+    ).slice(0, 32);
 
-  let decrypted = decipher.update(encryptedText.toString('hex'), 'hex', 'utf8');
-  decrypted += decipher.final('utf8');
+    const decipher = createDecipheriv('aes-256-cbc', keyBuffer, iv);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
 
-  return decrypted;
+    return decrypted;
+  } catch (error) {
+    return '';
+  }
 }

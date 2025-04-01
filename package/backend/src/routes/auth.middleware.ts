@@ -29,6 +29,7 @@ export class AuthMiddleware implements TRPCMiddleware {
     return await next({
       ctx: {
         ...ctx,
+        encryptionKey: (ctx as any).headers['x-birdiemail-encryption-key'],
         authorized: true,
         user: user,
       },

@@ -8,6 +8,7 @@ export class Imap {
   private readonly port: string;
   private readonly user: string;
   private readonly password: string;
+  private readonly secure: boolean = true;
   private connection: ImapFlow;
 
   constructor(conf: {
@@ -15,18 +16,20 @@ export class Imap {
     port: string;
     user: string;
     password: string;
+    secure?: boolean;
   }) {
     this.host = conf.host;
     this.port = conf.port;
     this.user = conf.user;
     this.password = conf.password;
+    this.secure = conf.secure ?? true;
   }
 
   async connect() {
     this.connection = new ImapFlow({
       host: this.host,
       port: Number(this.port),
-      secure: true,
+      secure: this.secure,
       auth: {
         user: this.user,
         pass: this.password,
@@ -117,6 +120,7 @@ export class Imap {
     port: string;
     user: string;
     password: string;
+    secure?: boolean;
   }) {
     const instance = new this(conf);
     await instance.connect();

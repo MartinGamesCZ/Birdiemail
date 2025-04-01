@@ -35,7 +35,7 @@ export class MailAccountEntity {
   @Column({ length: 128 })
   email: string;
 
-  @Column({ length: 255 })
+  @Column({ length: 255, select: false })
   password: string;
 
   @CreateDateColumn()

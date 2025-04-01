@@ -101,8 +101,10 @@ export class UserService {
     password: string,
     imap_host: string,
     imap_port: number,
+    imap_secure: boolean,
     smtp_host: string,
     smtp_port: number,
+    smtp_secure: boolean,
     user: UserEntity,
     encryptionKey: string,
   ) {
@@ -123,6 +125,7 @@ export class UserService {
     const imap = await Imap.connect({
       host: imap_host,
       port: imap_port.toString(),
+      secure: imap_secure,
       user: email,
       password: password,
     }).catch((e) => '@err');
@@ -136,8 +139,10 @@ export class UserService {
       where: {
         imapAddress: imap_host,
         imapPort: imap_port.toString(),
+        imapSecure: imap_secure,
         smtpAddress: smtp_host,
         smtpPort: smtp_port.toString(),
+        smtpSecure: smtp_secure,
       },
     });
 
@@ -146,8 +151,10 @@ export class UserService {
         id: randomUUID(),
         imapAddress: imap_host,
         imapPort: imap_port.toString(),
+        imapSecure: imap_secure,
         smtpAddress: smtp_host,
         smtpPort: smtp_port.toString(),
+        smtpSecure: smtp_secure,
       });
 
       const data = await Repo.mailServer.save(mailServer).catch((e) => ({
@@ -185,6 +192,19 @@ export class UserService {
     return OkResponse({
       id: data.id,
     });
+  }
+
+  async getMailAccounts(user: UserEntity) {
+    const mailAccounts = await Repo.mailAccount.find({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+      relations: ['mailServer'],
+    });
+
+    return mailAccounts;
   }
 
   private async checkIfUserExists(email: string): Promise<boolean> {
