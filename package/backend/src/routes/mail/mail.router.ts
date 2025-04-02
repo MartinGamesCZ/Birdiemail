@@ -16,25 +16,71 @@ export class MailRouter {
   @Query({
     input: z.object({
       accountId: z.string(),
+      mailbox: z.string(),
+      page: z.number().optional().default(1),
     }),
-    output: z.array(
-      z.object({
-        id: z.string(),
-        subject: z.string(),
-        sender: z.object({
-          name: z.string(),
-          email: z.string(),
+    output: z.object({
+      data: z.array(
+        z.object({
+          id: z.string(),
+          subject: z.string(),
+          sender: z.object({
+            name: z.string(),
+            email: z.string(),
+          }),
+          body: z.string(),
+          date: z.date(),
         }),
-        body: z.string(),
-        date: z.date(),
+      ),
+      meta: z.object({
+        page: z.number(),
+        total: z.number(),
+        totalPages: z.number(),
+        perPage: z.number(),
       }),
-    ),
+    }),
   })
-  async getMail(@Ctx() context: any, @Input() data: { accountId: string }) {
+  async getMail(
+    @Ctx() context: any,
+    @Input() data: { accountId: string; page: number; mailbox: string },
+  ) {
     return await this.mailService.getMail(
       context.user,
       context.encryptionKey,
       data.accountId,
+      data.mailbox,
+      data.page,
+    );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Query({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    }),
+    output: z.object({
+      id: z.string(),
+      subject: z.string(),
+      sender: z.object({
+        name: z.string(),
+        email: z.string(),
+      }),
+      body: z.string(),
+      date: z.date(),
+    }),
+  })
+  async getMailMessage(
+    @Ctx() context: any,
+    @Input() data: { accountId: string; mailbox: string; messageId: string },
+  ) {
+    return await this.mailService.getMailMessage(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
     );
   }
 }

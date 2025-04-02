@@ -29,6 +29,7 @@ export type Account = {
   name?: string;
 };
 
+// TODO: Add pager
 export default function Mailbox(props: {
   messages: {
     id: string;
@@ -41,8 +42,10 @@ export default function Mailbox(props: {
     date: string;
   }[];
   accounts: Account[];
+  boxId: string;
+  page: string;
+  messageId: string;
 }) {
-  const [selectedMessage, setSelectedMessage] = useState<number | null>(null);
   const [currentAccount, setCurrentAccount] = useState<Account>(
     props.accounts[0]
   );
@@ -145,12 +148,16 @@ export default function Mailbox(props: {
           {props.messages.map((message, i) => (
             <div
               key={i}
-              onClick={() => setSelectedMessage(i)}
+              onClick={() =>
+                router.push(
+                  `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
+                )
+              }
               className="cursor-pointer rounded-xl overflow-hidden flex-shrink-0"
             >
               <Card
                 className={`border transition-all duration-200 ${
-                  selectedMessage === i
+                  props.messageId == message.id
                     ? "border-blue-500 bg-blue-50 shadow-md dark:bg-blue-900/20"
                     : "border-gray-200 hover:border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/10"
                 }`}
@@ -164,7 +171,7 @@ export default function Mailbox(props: {
                           : message.sender.email
                       }
                       size="lg"
-                      active={selectedMessage === i}
+                      active={props.messageId == message.id}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-center">

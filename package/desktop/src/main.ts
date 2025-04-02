@@ -2,6 +2,7 @@ import { app, BrowserWindow, globalShortcut, ipcMain } from "electron";
 //import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { APP_URL } from "./config";
 
 //const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -53,14 +54,14 @@ function createWindow() {
   });
 
   globalShortcut.register("CommandOrControl+Shift+I", () => {
-    win?.loadURL("http://localhost:3001/dev");
+    win?.loadURL(`${APP_URL}/dev`);
   });
 
   win.webContents.on("did-finish-load", () => {
     win?.webContents.send("main-process-message", new Date().toLocaleString());
   });
 
-  win.loadURL("http://localhost:3001");
+  win.loadURL(APP_URL);
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common

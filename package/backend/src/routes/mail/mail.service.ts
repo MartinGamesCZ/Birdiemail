@@ -9,7 +9,13 @@ import { decryptMailPassword } from 'src/utils/encryption';
 export class MailService {
   private readonly connections = new Map<string, Imap>();
 
-  async getMail(user: UserEntity, encryptionKey: string, accountId: string) {
+  async getMail(
+    user: UserEntity,
+    encryptionKey: string,
+    accountId: string,
+    mailbox: string,
+    page: number = 1,
+  ) {
     if (!user) return [];
     if (!encryptionKey) return [];
 
@@ -31,7 +37,38 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection.mailbox('INBOX')).list();
+    return await (await connection.mailbox(mailbox)).list(page);
+  }
+
+  async getMailMessage(
+    user: UserEntity,
+    encryptionKey: string,
+    accountId: string,
+    mailbox: string,
+    messageId: string,
+  ) {
+    if (!user) return [];
+    if (!encryptionKey) return [];
+
+    const mailAccount = await Repo.mailAccount.findOne({
+      where: {
+        id: accountId,
+        user: {
+          id: user.id,
+        },
+      },
+      relations: ['mailServer'],
+      select: ['id', 'email', 'password', 'mailServer'],
+    });
+    if (!mailAccount) return [];
+
+    const connection = await this.establishConnection(
+      mailAccount.id,
+      mailAccount,
+      encryptionKey,
+    );
+
+    return await (await connection.mailbox(mailbox)).message(messageId);
   }
 
   private async establishConnection(

@@ -88,18 +88,42 @@ const appRouter = t.router({
   mailRouter: t.router({
     getMail: publicProcedure.input(z.object({
       accountId: z.string(),
-    })).output(z.array(
-      z.object({
-        id: z.string(),
-        subject: z.string(),
-        sender: z.object({
-          name: z.string(),
-          email: z.string(),
+      mailbox: z.string(),
+      page: z.number().optional().default(1),
+    })).output(z.object({
+      data: z.array(
+        z.object({
+          id: z.string(),
+          subject: z.string(),
+          sender: z.object({
+            name: z.string(),
+            email: z.string(),
+          }),
+          body: z.string(),
+          date: z.date(),
         }),
-        body: z.string(),
-        date: z.date(),
+      ),
+      meta: z.object({
+        page: z.number(),
+        total: z.number(),
+        totalPages: z.number(),
+        perPage: z.number(),
       }),
-    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    getMailMessage: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    })).output(z.object({
+      id: z.string(),
+      subject: z.string(),
+      sender: z.object({
+        name: z.string(),
+        email: z.string(),
+      }),
+      body: z.string(),
+      date: z.date(),
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })
 });
 export type AppRouter = typeof appRouter;

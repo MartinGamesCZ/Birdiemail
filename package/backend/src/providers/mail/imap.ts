@@ -53,8 +53,7 @@ export class Imap {
     const mbox = await this.connection.mailboxOpen(id);
 
     return {
-      list: async () => {
-        const page = 1;
+      list: async (page: number = 1) => {
         const mesagesTotal = mbox.exists;
         const perPage = 20;
         const pages = Math.ceil(mesagesTotal / perPage);
@@ -110,7 +109,42 @@ export class Imap {
           });
         }
 
-        return result.reverse();
+        return {
+          data: result.reverse(),
+          meta: {
+            page,
+            total: mesagesTotal,
+            totalPages: pages,
+            perPage,
+          },
+        };
+      },
+      message: async (id: string) => {
+        const searchResults = await this.connection.search({
+          uid: id,
+        });
+
+        const msg = await this.connection.fetchOne(
+          searchResults[0].toString(),
+          {
+            envelope: true,
+            source: true,
+            flags: true,
+          },
+        );
+
+        const data = extract(msg.source.toString());
+
+        return {
+          id: msg.uid.toString() ?? '',
+          subject: data.subject ?? '',
+          sender: {
+            name: data.from?.name ?? '',
+            email: data.from?.address ?? '',
+          },
+          body: data.html ?? data.text ?? '',
+          date: msg.envelope.date ?? new Date(0),
+        };
       },
     };
   }
