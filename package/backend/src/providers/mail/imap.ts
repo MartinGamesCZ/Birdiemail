@@ -76,6 +76,7 @@ export class Imap {
           };
           body: string;
           date: Date;
+          flags: string[];
         }[] = [];
 
         for await (const msg of msgs) {
@@ -97,6 +98,10 @@ export class Imap {
             .trim()
             .substring(0, 120);
 
+          const flags: string[] = [];
+
+          msg.flags.forEach((flag) => flags.push(flag));
+
           result.push({
             id: msg.uid.toString() ?? '',
             subject: data.subject ?? '',
@@ -106,6 +111,7 @@ export class Imap {
             },
             body: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
             date: msg.envelope.date ?? new Date(0),
+            flags: flags,
           });
         }
 

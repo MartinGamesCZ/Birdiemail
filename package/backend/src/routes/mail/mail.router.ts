@@ -29,6 +29,7 @@ export class MailRouter {
             email: z.string(),
           }),
           body: z.string(),
+          flags: z.array(z.string()),
           date: z.date(),
         }),
       ),

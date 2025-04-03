@@ -68,6 +68,7 @@ export default async function Page(props: {
       <Mailbox
         boxId={mailbox}
         page={page}
+        totalPages={data.meta.totalPages.toString()}
         messages={data.data}
         accounts={mailAccounts}
         messageId={messageId}
@@ -87,11 +88,11 @@ export default async function Page(props: {
                   size="lg"
                 />
                 <div className="flex-1 min-w-0 items-center">
-                  <h2 className="text-lg font-semibold truncate leading-none">
+                  <h2 className="text-lg font-semibold truncate leading-xs">
                     {message.sender.name}
                   </h2>
                   <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate mt-[-5px]">
                       {message.sender.email}
                     </p>
                     <p

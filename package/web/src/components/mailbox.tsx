@@ -22,6 +22,8 @@ import Link from "next/link";
 import { getCookie } from "@/utils/cookie";
 import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { Pagination } from "./ui/pagination";
+import { cn } from "@/lib/utils";
 
 export type Account = {
   id: string;
@@ -39,11 +41,13 @@ export default function Mailbox(props: {
       email: string;
     };
     body: string;
+    flags: string[];
     date: string;
   }[];
   accounts: Account[];
   boxId: string;
   page: string;
+  totalPages: string;
   messageId: string;
 }) {
   const [currentAccount, setCurrentAccount] = useState<Account>(
@@ -191,7 +195,14 @@ export default function Mailbox(props: {
                           {formatMailDate(message.date)}
                         </p>
                       </div>
-                      <h2 className="text-lg font-semibold truncate">
+                      <h2
+                        className={`
+                          text-lg truncate ${
+                            message.flags.includes("\\Seen")
+                              ? "font-semibold text-gray-800 dark:text-gray-200"
+                              : "font-extrabold"
+                          }`}
+                      >
                         {message.subject}
                       </h2>
                     </div>
@@ -203,6 +214,11 @@ export default function Mailbox(props: {
               </Card>
             </div>
           ))}
+          <Pagination
+            currentPage={Number(props.page)}
+            totalPages={Number(props.totalPages)}
+            baseUrl={`/mail/${props.boxId}`}
+          />
         </div>
       </div>
     </Card>

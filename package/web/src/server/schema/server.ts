@@ -100,6 +100,7 @@ const appRouter = t.router({
             email: z.string(),
           }),
           body: z.string(),
+          flags: z.array(z.string()),
           date: z.date(),
         }),
       ),
