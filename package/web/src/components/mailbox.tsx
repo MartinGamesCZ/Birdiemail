@@ -59,7 +59,11 @@ export default function Mailbox(props: {
       expires: 30,
     });
 
-    router.refresh();
+    // Remove messageId search param
+    const url = new URL(window.location.href);
+    url.searchParams.delete("messageId");
+
+    router.push(url.toString());
   };
 
   useEffect(() => {

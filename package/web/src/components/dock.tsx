@@ -21,17 +21,17 @@ const Links = [
     type: "section",
     items: [
       {
-        href: "/mail/box/inbox",
+        href: "/mail/inbox",
         icon: InboxIcon,
         label: "Inbox",
       },
       {
-        href: "/mail/box/starred",
+        href: "/mail/starred",
         icon: StarIcon,
         label: "Starred",
       },
       {
-        href: "/mail/box/spam",
+        href: "/mail/spam",
         icon: ShieldExclamationIcon,
         label: "Spam",
       },
@@ -79,9 +79,9 @@ const Links = [
   },
 ];
 
-export function Dock() {
+export function Dock(props: { active: string }) {
   const location = {
-    pathname: "/mail/box/inbox",
+    pathname: props.active,
   };
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 

@@ -152,7 +152,7 @@ export default function SetupEmailAccountPage() {
 
   return (
     <div className="w-full h-full flex flex-row gap-5 p-5 bg-gray-50 dark:bg-gray-900">
-      <Dock />
+      <Dock active="/user" />
       <Card className="flex-1">
         <CardHeader>
           <h1 className="text-2xl font-semibold">Add Email Account</h1>

@@ -8,6 +8,7 @@ import { Letter } from "react-letter";
 import { Mailview } from "@/components/mailview";
 import { Avatar } from "@/components/ui/avatar";
 import { formatMailDate } from "@/utils/dateparser";
+import Link from "next/link";
 
 export default async function Page(props: {
   params: Promise<{
@@ -21,13 +22,37 @@ export default async function Page(props: {
   const { mailbox, page } = await props.params;
   const { messageId } = await props.searchParams;
 
+  const mailAccounts = await trpc.userRouter.getMailAccounts.query();
+
+  if (mailAccounts.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-5">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <h2 className="text-2xl font-semibold text-center">
+              Welcome to Birdiemail
+            </h2>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-4">
+            <p className="text-gray-500 dark:text-gray-400 text-center">
+              No mail accounts have been added yet. Add your first account to
+              get started.
+            </p>
+            <Button className="mt-2" variant="primary">
+              <Link href="/user/accounts/setup">Add Account</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   const data = await trpc.mailRouter.getMail.query({
-    accountId: (await getCookie("current_account_id")) || "",
+    accountId:
+      ((await getCookie("current_account_id")) || mailAccounts[0]?.id) ?? "",
     mailbox,
     page: Number(page),
   });
-
-  const mailAccounts = await trpc.userRouter.getMailAccounts.query();
 
   const message = messageId
     ? await trpc.mailRouter.getMailMessage.query({
@@ -39,7 +64,7 @@ export default async function Page(props: {
 
   return (
     <div className="w-full h-full flex flex-row gap-5 p-5 bg-gray-50 dark:bg-gray-900">
-      <Dock />
+      <Dock active="/mail/inbox" />
       <Mailbox
         boxId={mailbox}
         page={page}
