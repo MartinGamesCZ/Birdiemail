@@ -1,4 +1,11 @@
-import { Ctx, Input, Query, Router, UseMiddlewares } from 'nestjs-trpc';
+import {
+  Ctx,
+  Input,
+  Mutation,
+  Query,
+  Router,
+  UseMiddlewares,
+} from 'nestjs-trpc';
 import { Imap } from 'src/providers/mail/imap';
 import { z } from 'zod';
 import { AuthMiddleware } from '../auth.middleware';
@@ -68,6 +75,7 @@ export class MailRouter {
         name: z.string(),
         email: z.string(),
       }),
+      flags: z.array(z.string()),
       body: z.string(),
       date: z.date(),
     }),
@@ -82,6 +90,39 @@ export class MailRouter {
       data.accountId,
       data.mailbox,
       data.messageId,
+    );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+      flag: z.string(),
+    }),
+    output: z.object({
+      id: z.string(),
+      flag: z.string(),
+    }),
+  })
+  async addMailMessageFlag(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      mailbox: string;
+      messageId: string;
+      flag: string;
+    },
+  ) {
+    return await this.mailService.addMailMessageFlag(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
+      data.flag,
     );
   }
 }

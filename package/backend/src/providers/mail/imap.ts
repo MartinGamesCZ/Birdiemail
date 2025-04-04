@@ -37,6 +37,7 @@ export class Imap {
       tls: {
         rejectUnauthorized: false,
       },
+      logger: false,
     });
 
     await this.connection.connect();
@@ -50,7 +51,9 @@ export class Imap {
   }
 
   async mailbox(id: string) {
-    const mbox = await this.connection.mailboxOpen(id);
+    const mbox = await this.connection.mailboxOpen(
+      decodeURIComponent(id).replace(/\:/gm, '/'),
+    );
 
     return {
       list: async (page: number = 1) => {
@@ -141,6 +144,10 @@ export class Imap {
 
         const data = extract(msg.source.toString());
 
+        const flags: string[] = [];
+
+        msg.flags.forEach((flag) => flags.push(flag));
+
         return {
           id: msg.uid.toString() ?? '',
           subject: data.subject ?? '',
@@ -148,8 +155,23 @@ export class Imap {
             name: data.from?.name ?? '',
             email: data.from?.address ?? '',
           },
+          flags,
           body: data.html ?? data.text ?? '',
           date: msg.envelope.date ?? new Date(0),
+        };
+      },
+      addFlag: async (id: string, flag: string) => {
+        const searchResults = await this.connection.search({
+          uid: id,
+        });
+
+        await this.connection.messageFlagsAdd(searchResults[0].toString(), [
+          flag,
+        ]);
+
+        return {
+          id: searchResults[0].toString(),
+          flag,
         };
       },
     };

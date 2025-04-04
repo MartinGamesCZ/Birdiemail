@@ -71,6 +71,38 @@ export class MailService {
     return await (await connection.mailbox(mailbox)).message(messageId);
   }
 
+  async addMailMessageFlag(
+    user: UserEntity,
+    encryptionKey: string,
+    accountId: string,
+    mailbox: string,
+    messageId: string,
+    flag: string,
+  ) {
+    if (!user) return [];
+    if (!encryptionKey) return [];
+
+    const mailAccount = await Repo.mailAccount.findOne({
+      where: {
+        id: accountId,
+        user: {
+          id: user.id,
+        },
+      },
+      relations: ['mailServer'],
+      select: ['id', 'email', 'password', 'mailServer'],
+    });
+    if (!mailAccount) return [];
+
+    const connection = await this.establishConnection(
+      mailAccount.id,
+      mailAccount,
+      encryptionKey,
+    );
+
+    return await (await connection.mailbox(mailbox)).addFlag(messageId, flag);
+  }
+
   private async establishConnection(
     id: string,
     mailAccount: MailAccountEntity,

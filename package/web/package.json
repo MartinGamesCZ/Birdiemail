@@ -17,7 +17,7 @@
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-select": "^2.1.6",
     "@tailwindcss/forms": "^0.5.10",
-    "@tanstack/react-query": "^5.70.0",
+    "@tanstack/react-query": "^5.71.10",
     "@trpc/client": "10.18.0",
     "@trpc/next": "10.18.0",
     "@trpc/react-query": "10.18.0",
@@ -35,7 +35,9 @@
     "react-toastify": "^11.0.5",
     "superjson": "^2.2.2",
     "tailwind-merge": "^3.0.2",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zustand": "^5.0.3",
+    "zustand-hash-storage": "^1.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

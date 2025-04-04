@@ -24,6 +24,9 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { Pagination } from "./ui/pagination";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/server/trpc";
+import { Spinner } from "./ui/spinner";
 
 export type Account = {
   id: string;
@@ -31,27 +34,26 @@ export type Account = {
   name?: string;
 };
 
-// TODO: Add pager
 export default function Mailbox(props: {
-  messages: {
-    id: string;
-    subject: string;
-    sender: {
-      name: string;
-      email: string;
-    };
-    body: string;
-    flags: string[];
-    date: string;
-  }[];
   accounts: Account[];
   boxId: string;
   page: string;
-  totalPages: string;
   messageId: string;
+  currentAccount: string;
 }) {
+  const { data: messages, isLoading } = useQuery({
+    queryKey: ["mailbox", props.currentAccount, props.boxId, props.page],
+    queryFn: async () =>
+      await trpc.mailRouter.getMail.query({
+        accountId: props.currentAccount,
+        mailbox: props.boxId,
+        page: Number(props.page),
+      }),
+  });
+
   const [currentAccount, setCurrentAccount] = useState<Account>(
-    props.accounts[0]
+    props.accounts.find((account) => account.id === props.currentAccount) ||
+      ({} as Account)
   );
 
   const router = useRouter();
@@ -69,24 +71,6 @@ export default function Mailbox(props: {
 
     router.push(url.toString());
   };
-
-  useEffect(() => {
-    (async () => {
-      const accountId = await getCookie("current_account_id");
-
-      if (accountId)
-        setCurrentAccount(props.accounts.find((a) => a.id === accountId)!);
-      else {
-        const defaultAccount = props.accounts[0];
-
-        setCurrentAccount(defaultAccount);
-
-        Cookies.set("current_account_id", defaultAccount.id, {
-          expires: 30,
-        });
-      }
-    })();
-  }, []);
 
   return (
     <Card className="px-7 py-5 gap-4 w-1/3 h-full flex flex-col">
@@ -153,70 +137,106 @@ export default function Mailbox(props: {
 
       <div className="relative flex-1 overflow-hidden">
         <div className="flex flex-col gap-4 w-full h-full pb-2 overflow-y-auto pr-2">
-          {props.messages.map((message, i) => (
-            <div
-              key={i}
-              onClick={() =>
-                router.push(
-                  `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
-                )
-              }
-              className="cursor-pointer rounded-xl overflow-hidden flex-shrink-0"
-            >
-              <Card
-                className={`border transition-all duration-200 ${
-                  props.messageId == message.id
-                    ? "border-blue-500 bg-blue-50 shadow-md dark:bg-blue-900/20"
-                    : "border-gray-200 hover:border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/10"
-                }`}
-              >
-                <CardContent className="gap-3 flex flex-col p-4 min-h-[120px]">
-                  <div className="flex gap-4 items-start">
-                    <Avatar
-                      name={
-                        message.sender.name?.length > 0
-                          ? message.sender.name
-                          : message.sender.email
-                      }
-                      size="lg"
-                      active={props.messageId == message.id}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">
-                          {message.sender.name?.length > 0
-                            ? message.sender.name
-                            : message.sender.email}
-                        </p>
-                        <p
-                          className="text-xs text-gray-500 flex-shrink-0 ml-2"
-                          suppressHydrationWarning
-                        >
-                          {formatMailDate(message.date)}
-                        </p>
+          {isLoading ? (
+            <Spinner fullScreen color="primary" size="lg" />
+          ) : (
+            messages!.data.map((message, i) => {
+              router.prefetch(
+                `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
+              );
+
+              return (
+                <div
+                  key={i}
+                  onClick={() =>
+                    router.push(
+                      `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
+                    )
+                  }
+                  className="cursor-pointer rounded-xl overflow-hidden flex-shrink-0"
+                >
+                  <Card
+                    className={cn(
+                      "transition-all duration-200 overflow-hidden relative",
+                      props.messageId == message.id
+                        ? "border border-blue-400 bg-blue-50 shadow-md dark:bg-blue-900/20"
+                        : message.flags.includes("\\Seen")
+                        ? "border border-gray-200 hover:border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/10"
+                        : "border border-gray-200 hover:border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 shadow-sm"
+                    )}
+                    noBorderStyling
+                  >
+                    {!message.flags.includes("\\Seen") && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 dark:bg-blue-500"></div>
+                    )}
+                    <CardContent className="gap-3 flex flex-col p-4 min-h-[120px]">
+                      <div className="flex gap-4 items-start">
+                        <Avatar
+                          name={
+                            message.sender.name?.length > 0
+                              ? message.sender.name
+                              : message.sender.email
+                          }
+                          size="lg"
+                          active={props.messageId == message.id}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-center">
+                            <p
+                              className={cn(
+                                "text-sm font-medium truncate",
+                                message.flags.includes("\\Seen")
+                                  ? "text-gray-600 dark:text-gray-400"
+                                  : "text-gray-800 dark:text-gray-200"
+                              )}
+                            >
+                              {message.sender.name?.length > 0
+                                ? message.sender.name
+                                : message.sender.email}
+                            </p>
+                            <div className="flex items-center gap-1">
+                              {!message.flags.includes("\\Seen") && (
+                                <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-500"></div>
+                              )}
+                              <p
+                                className="text-xs text-gray-500 flex-shrink-0 ml-2"
+                                suppressHydrationWarning
+                              >
+                                {formatMailDate(message.date)}
+                              </p>
+                            </div>
+                          </div>
+                          <h2
+                            className={cn(
+                              "text-lg truncate",
+                              message.flags.includes("\\Seen")
+                                ? "font-semibold text-gray-800 dark:text-gray-200"
+                                : "font-bold text-black dark:text-white"
+                            )}
+                          >
+                            {message.subject}
+                          </h2>
+                        </div>
                       </div>
-                      <h2
-                        className={`
-                          text-lg truncate ${
-                            message.flags.includes("\\Seen")
-                              ? "font-semibold text-gray-800 dark:text-gray-200"
-                              : "font-extrabold"
-                          }`}
+                      <p
+                        className={cn(
+                          "line-clamp-2 overflow-hidden",
+                          message.flags.includes("\\Seen")
+                            ? "text-gray-700 dark:text-gray-300"
+                            : "text-gray-800 dark:text-gray-200"
+                        )}
                       >
-                        {message.subject}
-                      </h2>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 line-clamp-2 overflow-hidden">
-                    {message.body.substring(0, 100)}...
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          ))}
+                        {message.body.substring(0, 100)}...
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })
+          )}
           <Pagination
             currentPage={Number(props.page)}
-            totalPages={Number(props.totalPages)}
+            totalPages={Number(messages?.meta.totalPages ?? 0)}
             baseUrl={`/mail/${props.boxId}`}
           />
         </div>

@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { ToastContainer } from "react-toastify";
+import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta-sans",
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${plusJakartaSans.variable} h-full antialiased`}>
         <ToastContainer className="mt-10" />
-        <ThemeProvider>{children}</ThemeProvider>
+        <ReactQueryProvider>
+          <ThemeProvider>{children}</ThemeProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );

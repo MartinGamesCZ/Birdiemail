@@ -4,12 +4,22 @@ interface CardProps {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
+  noBorderStyling?: boolean;
 }
 
-export function Card({ children, className = "", onClick }: CardProps) {
+export function Card({
+  children,
+  className = "",
+  onClick,
+  noBorderStyling,
+}: CardProps) {
   return (
     <div
-      className={`shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 ${className}`}
+      className={`shadow-sm rounded-xl ${
+        !noBorderStyling
+          ? "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+          : ""
+      } ${className}`}
       onClick={onClick}
     >
       {children}

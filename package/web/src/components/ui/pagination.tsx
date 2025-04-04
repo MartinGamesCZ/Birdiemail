@@ -76,7 +76,6 @@ export function Pagination({
             : "hover:bg-gray-100 dark:hover:bg-gray-800"
         )}
         onClick={onPageChange ? () => handlePageChange(numPage) : undefined}
-        {...(!onPageChange && !isCurrentPage && { asChild: true })}
       >
         {!onPageChange && !isCurrentPage ? (
           <Link
@@ -104,7 +103,6 @@ export function Pagination({
           onPageChange ? () => handlePageChange(currentPage - 1) : undefined
         }
         disabled={!hasPrevious}
-        {...(!onPageChange && hasPrevious && { asChild: true })}
       >
         {!onPageChange && hasPrevious ? (
           <Link
@@ -143,7 +141,6 @@ export function Pagination({
           onPageChange ? () => handlePageChange(currentPage + 1) : undefined
         }
         disabled={!hasNext}
-        {...(!onPageChange && hasNext && { asChild: true })}
       >
         {!onPageChange && hasNext ? (
           <Link

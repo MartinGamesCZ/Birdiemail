@@ -9,6 +9,7 @@ import { Mailview } from "@/components/mailview";
 import { Avatar } from "@/components/ui/avatar";
 import { formatMailDate } from "@/utils/dateparser";
 import Link from "next/link";
+import { MailMessage } from "./client";
 
 export default async function Page(props: {
   params: Promise<{
@@ -47,20 +48,8 @@ export default async function Page(props: {
     );
   }
 
-  const data = await trpc.mailRouter.getMail.query({
-    accountId:
-      ((await getCookie("current_account_id")) || mailAccounts[0]?.id) ?? "",
-    mailbox,
-    page: Number(page),
-  });
-
-  const message = messageId
-    ? await trpc.mailRouter.getMailMessage.query({
-        accountId: (await getCookie("current_account_id")) || "",
-        mailbox,
-        messageId,
-      })
-    : null;
+  const accountId =
+    ((await getCookie("current_account_id")) || mailAccounts[0]?.id) ?? "";
 
   return (
     <div className="w-full h-full flex flex-row gap-5 p-5 bg-gray-50 dark:bg-gray-900">
@@ -68,44 +57,18 @@ export default async function Page(props: {
       <Mailbox
         boxId={mailbox}
         page={page}
-        totalPages={data.meta.totalPages.toString()}
-        messages={data.data}
         accounts={mailAccounts}
         messageId={messageId}
+        currentAccount={accountId}
       />
       <Card className="flex-1 p-0">
         <CardContent className="h-[calc(100%)]">
-          {message ? (
-            <div className="w-full h-full overflow-y-auto">
-              <h2 className="text-2xl font-semibold">{message.subject}</h2>
-              <div className="flex gap-4 items-center mt-4 mb-4 mr-8 ">
-                <Avatar
-                  name={
-                    message.sender.name?.length > 0
-                      ? message.sender.name
-                      : message.sender.email
-                  }
-                  size="lg"
-                />
-                <div className="flex-1 min-w-0 items-center">
-                  <h2 className="text-lg font-semibold truncate leading-xs">
-                    {message.sender.name}
-                  </h2>
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate mt-[-5px]">
-                      {message.sender.email}
-                    </p>
-                    <p
-                      className="text-xs text-gray-500 flex-shrink-0 ml-2"
-                      suppressHydrationWarning
-                    >
-                      {formatMailDate(message.date)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <Mailview body={message.body} />
-            </div>
+          {messageId ? (
+            <MailMessage
+              messageId={messageId}
+              accountId={accountId}
+              mailbox={mailbox}
+            />
           ) : (
             <div className="text-gray-500 dark:text-gray-400 text-center mt-40">
               Select a message to view its contents

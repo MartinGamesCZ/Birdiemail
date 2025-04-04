@@ -122,9 +122,19 @@ const appRouter = t.router({
         name: z.string(),
         email: z.string(),
       }),
+      flags: z.array(z.string()),
       body: z.string(),
       date: z.date(),
-    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    addMailMessageFlag: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+      flag: z.string(),
+    })).output(z.object({
+      id: z.string(),
+      flag: z.string(),
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })
 });
 export type AppRouter = typeof appRouter;

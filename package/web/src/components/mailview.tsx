@@ -4,7 +4,13 @@ import { sanitize } from "lettersanitizer";
 import { useEffect, useRef } from "react";
 
 export function Mailview(props: { body: string }) {
-  const html = sanitize(props.body, props.body);
+  let html = "";
+  try {
+    html = sanitize(props.body, props.body);
+  } catch (e) {
+    html = `<html><body><p>Failed to load email</p></body></html>`;
+  }
+
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
@@ -26,7 +32,12 @@ export function Mailview(props: { body: string }) {
       iframe.style.height = `${height}px`;
     };
 
-    iframe.onload = resizeIframe;
+    iframe.onload = () => {
+      resizeIframe();
+
+      if (iframe.contentDocument)
+        iframe.contentDocument.body.style.fontFamily = "Plus Jakarta Sans";
+    };
 
     if (iframe.contentWindow) {
       const resizeObserver = new ResizeObserver(resizeIframe);
@@ -50,7 +61,10 @@ export function Mailview(props: { body: string }) {
       srcDoc={html}
       scrolling="no"
       className="w-full border-none"
-      style={{ minHeight: "100px" }}
+      style={{
+        minHeight: "100px",
+        fontFamily: "var(--font-plus-jakarta-sans)",
+      }}
     />
   );
 }
