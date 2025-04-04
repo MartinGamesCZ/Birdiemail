@@ -1,0 +1,73 @@
+[
+  {
+    "type": "goal",
+    "title": "Desktop // First public release (Tester queue)",
+    "description": "The first public release of the desktop app.",
+    "requirements": [
+      {
+        "name": "Auth // Sign up",
+        "done": true
+      },
+      {
+        "name": "Auth // Sign in",
+        "done": true
+      },
+      {
+        "name": "Auth // Email verification",
+        "done": false
+      },
+      {
+        "name": "Auth // Password reset",
+        "done": false
+      },
+      {
+        "name": "Mail // Mail account setup",
+        "done": true
+      },
+      {
+        "name": "Mail // Account switcher",
+        "done": true
+      },
+      {
+        "name": "Mail // Mail list (Inbox)",
+        "done": true
+      },
+      {
+        "name": "Mail // Different mailboxes",
+        "done": false
+      },
+      {
+        "name": "Mail // Message contents",
+        "done": true
+      },
+      {
+        "name": "Mail // Message actions",
+        "done": false
+      },
+      {
+        "name": "Mail // Message sending",
+        "done": false
+      },
+      {
+        "name": "Mail // Message replying",
+        "done": false
+      },
+      {
+        "name": "Mail // Message reply chain",
+        "done": false
+      },
+      {
+        "name": "Mail // Message flags",
+        "done": false
+      },
+      {
+        "name": "Project // Security testing",
+        "done": false
+      },
+      {
+        "name": "User // User settings",
+        "done": false
+      }
+    ]
+  }
+]
