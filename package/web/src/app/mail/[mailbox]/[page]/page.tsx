@@ -53,7 +53,7 @@ export default async function Page(props: {
 
   return (
     <div className="w-full h-full flex flex-row gap-5 p-5 bg-gray-50 dark:bg-gray-900">
-      <Dock active="/mail/inbox" />
+      <Dock active={"/mail/" + mailbox} />
       <Mailbox
         boxId={mailbox}
         page={page}

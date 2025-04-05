@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BarsArrowUpIcon,
   BookOpenIcon,
   CalendarIcon,
   ChatBubbleLeftIcon,
@@ -9,31 +10,43 @@ import {
   PencilIcon,
   ShieldExclamationIcon,
   StarIcon,
+  TrashIcon,
   UserIcon,
   UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useState } from "react";
 import { Card } from "./ui/card";
+import { Mailbox } from "@/types/Mailbox";
 
 const Links = [
   {
     type: "section",
     items: [
       {
-        href: "/mail/inbox",
+        href: `/mail/${encodeURIComponent(Mailbox.Inbox)}`,
         icon: InboxIcon,
         label: "Inbox",
       },
       {
-        href: "/mail/starred",
+        href: `/mail/${encodeURIComponent(Mailbox.Flagged)}`,
         icon: StarIcon,
         label: "Starred",
       },
       {
-        href: "/mail/spam",
+        href: `/mail/${encodeURIComponent(Mailbox.Spam)}`,
         icon: ShieldExclamationIcon,
         label: "Spam",
+      },
+      {
+        href: `/mail/${encodeURIComponent(Mailbox.Trash)}`,
+        icon: TrashIcon,
+        label: "Trash",
+      },
+      {
+        href: `/mail/${encodeURIComponent(Mailbox.Sent)}`,
+        icon: BarsArrowUpIcon,
+        label: "Sent",
       },
     ],
   },

@@ -2,6 +2,7 @@ import { ImapFlow } from 'imapflow';
 import { extract } from 'letterparser';
 import { JSDOM } from 'jsdom';
 import { convert } from 'html-to-text';
+import { idText } from 'typescript';
 
 export class Imap {
   private readonly host: string;
@@ -56,7 +57,19 @@ export class Imap {
     );
   }
 
+  async mailboxList() {
+    return await this.connection.list();
+  }
+
   async mailbox(id: string) {
+    id = decodeURIComponent(id);
+
+    if (id.startsWith('@')) {
+      const boxes = await this.mailboxList();
+
+      id = boxes.find((a) => a.specialUse == `\\${id.slice(1)}`)?.path ?? '';
+    }
+
     const mbox = await this.connection.mailboxOpen(
       decodeURIComponent(id).replace(/\:/gm, '/'),
     );

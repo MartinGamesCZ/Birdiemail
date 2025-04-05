@@ -228,6 +228,7 @@ export function MailMessage(props: {
         mailbox: props.mailbox,
         messageId: props.messageId,
       }),
+    retryDelay: 4000,
   });
 
   const queryClient = useQueryClient();

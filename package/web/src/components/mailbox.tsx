@@ -49,6 +49,7 @@ export default function Mailbox(props: {
         mailbox: props.boxId,
         page: Number(props.page),
       }),
+    retryDelay: 4000,
   });
 
   const [currentAccount, setCurrentAccount] = useState<Account>(
