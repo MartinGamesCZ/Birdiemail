@@ -151,6 +151,22 @@ const appRouter = t.router({
       destination: z.string(),
     })).output(z.object({
       id: z.string(),
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    sendMailMessage: publicProcedure.input(z.object({
+      accountId: z.string(),
+      data: z.object({
+        to: z.string(),
+        cc: z.string().optional(),
+        bcc: z.string().optional(),
+        subject: z.string(),
+        body: z.string(),
+        attachments: z.array(
+          z.object({
+            name: z.string(),
+            content: z.string(),
+          }),
+        ),
+      }),
     })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })
 });

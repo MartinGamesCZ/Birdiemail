@@ -46,7 +46,7 @@
       },
       {
         "name": "Mail // Message sending",
-        "done": false
+        "done": true
       },
       {
         "name": "Mail // Message replying",

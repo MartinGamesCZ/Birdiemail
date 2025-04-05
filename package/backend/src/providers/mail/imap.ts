@@ -2,7 +2,6 @@ import { ImapFlow } from 'imapflow';
 import { extract } from 'letterparser';
 import { JSDOM } from 'jsdom';
 import { convert } from 'html-to-text';
-import { idText } from 'typescript';
 
 export class Imap {
   private readonly host: string;

@@ -13,6 +13,10 @@
   height: calc(100vh - 40px);
 }
 
+.tiptap {
+  min-height: 200px;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }

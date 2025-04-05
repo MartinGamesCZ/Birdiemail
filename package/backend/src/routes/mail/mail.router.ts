@@ -190,4 +190,49 @@ export class MailRouter {
       data.destination,
     );
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      accountId: z.string(),
+      data: z.object({
+        to: z.string(),
+        cc: z.string().optional(),
+        bcc: z.string().optional(),
+        subject: z.string(),
+        body: z.string(),
+        attachments: z.array(
+          z.object({
+            name: z.string(),
+            content: z.string(),
+          }),
+        ),
+      }),
+    }),
+  })
+  async sendMailMessage(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      data: {
+        to: string;
+        cc?: string;
+        bcc?: string;
+        subject: string;
+        body: string;
+        attachments: {
+          name: string;
+          content: string;
+        }[];
+      };
+    },
+  ) {
+    return await this.mailService.sendMessage(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.data,
+    );
+  }
 }
