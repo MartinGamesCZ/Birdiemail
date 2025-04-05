@@ -42,7 +42,7 @@
       },
       {
         "name": "Mail // Message actions",
-        "done": false
+        "done": true
       },
       {
         "name": "Mail // Message sending",

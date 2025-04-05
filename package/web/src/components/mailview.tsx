@@ -60,8 +60,9 @@ export function Mailview(props: { body: string }) {
       ref={iframeRef}
       srcDoc={html}
       scrolling="no"
-      className="w-full border-none"
+      className="border-none"
       style={{
+        width: "calc(100% - 1rem)",
         minHeight: "100px",
         fontFamily: "var(--font-plus-jakarta-sans)",
       }}

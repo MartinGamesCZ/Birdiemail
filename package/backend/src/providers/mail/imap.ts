@@ -40,6 +40,12 @@ export class Imap {
       logger: false,
     });
 
+    this.connection.on('error', (err) => {
+      console.error('Connection error:', err);
+
+      this.connect();
+    });
+
     await this.connection.connect();
   }
 
@@ -172,6 +178,34 @@ export class Imap {
         return {
           id: searchResults[0].toString(),
           flag,
+        };
+      },
+      removeFlag: async (id: string, flag: string) => {
+        const searchResults = await this.connection.search({
+          uid: id,
+        });
+
+        await this.connection.messageFlagsRemove(searchResults[0].toString(), [
+          flag,
+        ]);
+
+        return {
+          id: searchResults[0].toString(),
+          flag,
+        };
+      },
+      move: async (id: string, destination: string) => {
+        const searchResults = await this.connection.search({
+          uid: id,
+        });
+
+        await this.connection.messageMove(
+          searchResults[0].toString(),
+          destination,
+        );
+
+        return {
+          id: searchResults[0].toString(),
         };
       },
     };

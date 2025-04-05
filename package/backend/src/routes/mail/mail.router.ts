@@ -125,4 +125,69 @@ export class MailRouter {
       data.flag,
     );
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+      flag: z.string(),
+    }),
+    output: z.object({
+      id: z.string(),
+      flag: z.string(),
+    }),
+  })
+  async removeMailMessageFlag(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      mailbox: string;
+      messageId: string;
+      flag: string;
+    },
+  ) {
+    return await this.mailService.removeMailMessageFlag(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
+      data.flag,
+    );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+      destination: z.string(),
+    }),
+    output: z.object({
+      id: z.string(),
+    }),
+  })
+  async moveMailMessage(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      mailbox: string;
+      messageId: string;
+      destination: string;
+    },
+  ) {
+    return await this.mailService.moveMessage(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
+      data.destination,
+    );
+  }
 }

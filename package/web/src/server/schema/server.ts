@@ -134,6 +134,23 @@ const appRouter = t.router({
     })).output(z.object({
       id: z.string(),
       flag: z.string(),
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    removeMailMessageFlag: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+      flag: z.string(),
+    })).output(z.object({
+      id: z.string(),
+      flag: z.string(),
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    moveMailMessage: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+      destination: z.string(),
+    })).output(z.object({
+      id: z.string(),
     })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })
 });
