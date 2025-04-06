@@ -28,8 +28,9 @@
     "deleteAppDataOnUninstall": false
   },
   "linux": {
-    "target": ["AppImage"],
+    "target": ["AppImage", "deb"],
     "artifactName": "${productName}-Linux-${version}.${ext}",
-    "category": "Office"
+    "category": "Office",
+    "icon": "public/logo_appicon.png"
   }
 }
