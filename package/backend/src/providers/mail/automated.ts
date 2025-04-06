@@ -1,6 +1,6 @@
 import { readFileSync } from 'fs';
 import Handlebars from 'handlebars';
-import path from 'path';
+import * as path from 'path';
 import { Smtp } from './smtp';
 
 export enum AutomatedMailType {
