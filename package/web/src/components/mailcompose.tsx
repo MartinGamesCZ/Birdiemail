@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   PaperAirplaneIcon,
   XMarkIcon,
@@ -60,6 +60,42 @@ export default function MailCompose({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window == "undefined") return;
+
+    const urlParams = new URL(location.href).searchParams;
+
+    const pTo = urlParams.get("to");
+    const pAction = urlParams.get("action");
+    const pSourceMessageId = urlParams.get("src-msg-id");
+    const pSourceMessageMailbox = urlParams.get("src-msg-mbox");
+
+    (async () => {
+      if (pTo) setTo(pTo.split(",").map((email) => email.trim()));
+
+      if (pSourceMessageId && pSourceMessageMailbox) {
+        const message = await trpc.mailRouter.getMailMessage.query({
+          accountId: currentAccountId,
+          mailbox: pSourceMessageMailbox,
+          messageId: pSourceMessageId,
+        });
+
+        setSubject(`Fwd: ${message.subject}`);
+        setBody(
+          [
+            `-------------- Forwarded message --------------`,
+            `From: ${message.sender.name} (${message.sender.email})`,
+            `To: ${to.join(", ")}`,
+            `Subject: ${message.subject}`,
+            `Date: ${new Date(message.date).toLocaleString()}`,
+            ``,
+            message.body,
+          ].join("<br />")
+        );
+      }
+    })();
+  }, []);
 
   const currentAccount =
     accounts.find((account) => account.id === currentAccountId) || accounts[0];

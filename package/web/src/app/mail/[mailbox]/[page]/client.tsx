@@ -83,8 +83,9 @@ function MailToolbar(props: {
       label: loadingActions.forward ? "Loading..." : "Forward",
       onClick: () =>
         handleAction("forward", async () => {
-          // TODO
-          alert("Work in progress");
+          router.push(
+            `/mail/compose?action=forward&src-msg-id=${props.messageId}&src-msg-mbox=${props.mailbox}`
+          );
         }),
       disabled: loadingActions.forward,
     },
