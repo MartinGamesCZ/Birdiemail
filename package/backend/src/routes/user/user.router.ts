@@ -51,6 +51,25 @@ export class UserRouter {
     return await this.userService.signup(data.email, data.password, data.name);
   }
 
+  @Mutation({
+    input: z.object({
+      key: z.string(),
+    }),
+    output: z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ]),
+  })
+  async verify(@Input() data: { key: string }) {
+    return await this.userService.verify(data.key);
+  }
+
   @Query({
     input: z.object({
       email: z.string(),

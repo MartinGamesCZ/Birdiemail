@@ -75,6 +75,17 @@ export class Imap {
 
     return {
       list: async (page: number = 1) => {
+        if (mbox.exists == 0)
+          return {
+            data: [],
+            meta: {
+              page,
+              total: 0,
+              totalPages: 0,
+              perPage: 0,
+            },
+          };
+
         const mesagesTotal = mbox.exists;
         const perPage = 20;
         const pages = Math.ceil(mesagesTotal / perPage);

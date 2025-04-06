@@ -3,6 +3,7 @@ import { compareSync, hashSync } from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { Repo } from 'src/db/_index';
 import { UserEntity } from 'src/db/user.entity';
+import { AutomatedMail, AutomatedMailType } from 'src/providers/mail/automated';
 import { Imap } from 'src/providers/mail/imap';
 import { Response } from 'src/types/response/_index';
 import {
@@ -48,7 +49,43 @@ export class UserService {
 
     if ('error' in res) return ErrorResponse(res.error);
 
-    // TODO: Add email verification mail sender
+    const verificationMail = new AutomatedMail(
+      AutomatedMailType.SignupVerification,
+    );
+
+    verificationMail.insertPlaceholders({
+      name: name,
+      verificationLink: `${process.env.NET_WEB_PUB}/auth/verify?code=${user.verificationCode}`,
+      currentYear: new Date().getFullYear().toString(),
+      termsUrl: `${process.env.NET_WEB_PUB}/terms`,
+      privacyPolicyUrl: `${process.env.NET_WEB_PUB}/privacy`,
+    });
+
+    await verificationMail.send(email);
+
+    return OkResponse({});
+  }
+
+  async verify(key: string) {
+    if (!key) return;
+
+    const user = await Repo.user.findOne({
+      where: {
+        verificationCode: key,
+      },
+    });
+    if (!user)
+      return ErrorResponse(
+        'Invalid verification code (maybe already verified?)',
+      );
+
+    user.isVerified = true;
+    user.verificationCode = '-';
+
+    const res = await Repo.user.save(user).catch((e) => ({
+      error: e.message,
+    }));
+    if ('error' in res) return ErrorResponse(res.error);
 
     return OkResponse({});
   }

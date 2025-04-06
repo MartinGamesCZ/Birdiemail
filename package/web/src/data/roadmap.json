@@ -14,7 +14,7 @@
       },
       {
         "name": "Auth // Email verification",
-        "done": false
+        "done": true
       },
       {
         "name": "Auth // Password reset",
@@ -58,7 +58,7 @@
       },
       {
         "name": "Mail // Message flags",
-        "done": false
+        "done": true
       },
       {
         "name": "Project // Security testing",
