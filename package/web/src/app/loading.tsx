@@ -29,6 +29,7 @@ export default function Loading() {
     "Retrieving your lost mail...",
     "Resolving addresses...",
     "Who is Lucy?",
+    "What came first? The email, our your excuse to not reply?",
   ];
   const message = messages[Math.floor(Math.random() * messages.length)];
 

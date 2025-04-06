@@ -2,7 +2,8 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "social.birdiemail.desktop",
   "asar": true,
-  "productName": "Birdiemail",
+  "productName": "Birdiemail Desktop",
+  "icon": "public/logo_appicon.png",
   "directories": {
     "output": "release/${version}"
   },
@@ -28,6 +29,7 @@
   },
   "linux": {
     "target": ["AppImage"],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+    "artifactName": "${productName}-Linux-${version}.${ext}",
+    "category": "Office"
   }
 }
