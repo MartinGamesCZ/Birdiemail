@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { trpc } from "@/server/trpc";
+import { Mailbox } from "@/types/Mailbox";
 import { MailFlag } from "@/types/MailFlag";
 import { formatMailDate } from "@/utils/dateparser";
 import {
@@ -18,6 +19,7 @@ import {
   StarIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, createElement } from "react";
@@ -27,6 +29,17 @@ function MailToolbar(props: {
   accountId: string;
   mailbox: string;
   messageId: string;
+  message: {
+    date: string;
+    id: string;
+    subject: string;
+    sender: {
+      name: string;
+      email: string;
+    };
+    body: string;
+    flags: string[];
+  };
 }) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
@@ -78,12 +91,45 @@ function MailToolbar(props: {
     { id: "divider1", type: "divider" },
     {
       id: "star",
-      icon: StarIcon,
+      icon: props.message.flags.includes(MailFlag.Flagged)
+        ? StarIconSolid
+        : StarIcon,
       label: loadingActions.star ? "Loading..." : "Star",
       onClick: () =>
         handleAction("star", async () => {
-          // TODO
-          alert("Work in progress");
+          const willBeRemoved = props.message.flags.includes(MailFlag.Flagged);
+
+          if (willBeRemoved)
+            await await trpc.mailRouter.removeMailMessageFlag.mutate({
+              flag: MailFlag.Flagged,
+              messageId: props.messageId,
+              mailbox: props.mailbox,
+              accountId: props.accountId,
+            });
+          else
+            await trpc.mailRouter.addMailMessageFlag.mutate({
+              flag: MailFlag.Flagged,
+              messageId: props.messageId,
+              mailbox: props.mailbox,
+              accountId: props.accountId,
+            });
+
+          queryClient.refetchQueries({
+            queryKey: ["mailbox", props.accountId, props.mailbox],
+          });
+
+          if (
+            willBeRemoved &&
+            props.mailbox == encodeURIComponent(Mailbox.Flagged)
+          ) {
+            const newUrl = new URL(location.href);
+            newUrl.searchParams.delete("messageId");
+
+            router.push(newUrl.href);
+          } else
+            await queryClient.refetchQueries({
+              queryKey: ["mailMessage", props.accountId, props.mailbox],
+            });
         }),
       disabled: loadingActions.star,
     },
@@ -281,7 +327,7 @@ export function MailMessage(props: {
         </div>
       </div>
 
-      <MailToolbar {...props} />
+      <MailToolbar {...props} message={data} />
       <Mailview body={data.body} />
     </div>
   );

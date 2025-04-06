@@ -6,7 +6,9 @@ import {
   ClockIcon,
   ChevronDownIcon,
   PlusIcon,
+  StarIcon,
 } from "@heroicons/react/24/outline";
+import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { Avatar } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
@@ -27,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/server/trpc";
 import { Spinner } from "./ui/spinner";
+import { MailFlag } from "@/types/MailFlag";
 
 export type Account = {
   id: string;
@@ -196,8 +199,11 @@ export default function Mailbox(props: {
                                 : message.sender.email}
                             </p>
                             <div className="flex items-center gap-1">
-                              {!message.flags.includes("\\Seen") && (
+                              {!message.flags.includes(MailFlag.Seen) && (
                                 <div className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-500"></div>
+                              )}
+                              {message.flags.includes(MailFlag.Flagged) && (
+                                <StarIconSolid className="h-4 w-4 text-blue-500" />
                               )}
                               <p
                                 className="text-xs text-gray-500 flex-shrink-0 ml-2"
@@ -210,7 +216,7 @@ export default function Mailbox(props: {
                           <h2
                             className={cn(
                               "text-lg truncate",
-                              message.flags.includes("\\Seen")
+                              message.flags.includes(MailFlag.Seen)
                                 ? "font-semibold text-gray-800 dark:text-gray-200"
                                 : "font-bold text-black dark:text-white"
                             )}
