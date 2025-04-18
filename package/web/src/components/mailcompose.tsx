@@ -42,6 +42,9 @@ interface MailComposeProps {
   currentAccountId?: string;
 }
 
+// TODO: Fix mail rendering for forwarding
+// TODO: Injection security testing!!! (should sandbox if possible)
+// TODO: Add proper headers when forwarding
 export default function MailCompose({
   defaultTo = [],
   defaultSubject = "",

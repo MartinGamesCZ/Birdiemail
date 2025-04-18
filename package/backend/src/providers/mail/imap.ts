@@ -46,7 +46,7 @@ export class Imap {
       this.connect();
     });
 
-    await this.connection.connect();
+    await this.connection.connect().catch();
   }
 
   async isConnected() {
@@ -57,21 +57,21 @@ export class Imap {
   }
 
   async mailboxList() {
-    return await this.connection.list();
+    return await this.connection.list().catch();
   }
 
   async mailbox(id: string) {
     id = decodeURIComponent(id);
 
     if (id.startsWith('@')) {
-      const boxes = await this.mailboxList();
+      const boxes = await this.mailboxList().catch();
 
       id = boxes.find((a) => a.specialUse == `\\${id.slice(1)}`)?.path ?? '';
     }
 
-    const mbox = await this.connection.mailboxOpen(
-      decodeURIComponent(id).replace(/\:/gm, '/'),
-    );
+    const mbox = await this.connection
+      .mailboxOpen(decodeURIComponent(id).replace(/\:/gm, '/'))
+      .catch();
 
     return {
       list: async (page: number = 1) => {
@@ -242,7 +242,7 @@ export class Imap {
     secure?: boolean;
   }) {
     const instance = new this(conf);
-    await instance.connect();
+    await instance.connect().catch();
 
     return instance;
   }
