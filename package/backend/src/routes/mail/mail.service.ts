@@ -218,7 +218,14 @@ export class MailService {
       subject: data.subject,
       body: data.body,
       from: `${mailAccount.name} <${mailAccount.email}>`,
-      headers: data.headers,
+      headers: {
+        ...data.headers,
+        'X-Mailer': 'Birdiemail',
+        'X-Birdie-Client': 'Birdiemail',
+        'X-Birdie-User-Id': user.id,
+        'X-Birdie-Account-Id': mailAccount.id,
+        'X-Birdie-Scheduled-At': new Date().toISOString(),
+      },
       attachments: data.attachments.map((f) => ({
         content: Buffer.from(
           f.content.includes('base64,')

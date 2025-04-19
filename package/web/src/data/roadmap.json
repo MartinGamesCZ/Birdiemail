@@ -50,7 +50,7 @@
       },
       {
         "name": "Mail // Message replying",
-        "done": false
+        "done": true
       },
       {
         "name": "Mail // Message reply chain",
@@ -66,6 +66,10 @@
       },
       {
         "name": "User // User settings",
+        "done": false
+      },
+      {
+        "name": "Internal // Admin panel",
         "done": false
       }
     ]
