@@ -266,6 +266,7 @@ export function MailMessage(props: {
   messageId: string;
   accountId: string;
   mailbox: string;
+  isInChain?: boolean;
 }) {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["mailMessage", props.accountId, props.mailbox, props.messageId],
@@ -275,6 +276,22 @@ export function MailMessage(props: {
         mailbox: props.mailbox,
         messageId: props.messageId,
       }),
+    retryDelay: 4000,
+  });
+
+  const reference = (data?.headers as Record<string, any>)?.[
+    "In-Reply-To"
+  ] as string;
+
+  const { data: referenceData } = useQuery({
+    queryKey: ["mailMessage", props.accountId, props.mailbox, reference],
+    queryFn: async () =>
+      await trpc.mailRouter.getMailMessage.query({
+        accountId: props.accountId,
+        mailbox: props.mailbox,
+        messageId: reference!,
+      }),
+    enabled: !!reference,
     retryDelay: 4000,
   });
 
@@ -297,6 +314,17 @@ export function MailMessage(props: {
         });
       });
   }, [data]);
+
+  let body =
+    data?.body.split("---------- Forwarded message ---------")?.[0] ?? "";
+
+  if (data?.subject.includes("Re:"))
+    body =
+      data?.body.split(
+        `<div class="gmail_quote gmail_quote_container">`
+      )?.[0] ?? "";
+
+  console.log(data?.headers);
 
   return isLoading || !data ? (
     <Spinner fullScreen color="primary" size="lg" />
@@ -328,8 +356,27 @@ export function MailMessage(props: {
         </div>
       </div>
 
-      <MailToolbar {...props} message={data} />
-      <Mailview body={data.body} />
+      {!props.isInChain && <MailToolbar {...props} message={data} />}
+      {data?.preview.split("---------- Forwarded message ---------")[0].trim()
+        .length > 0 && <Mailview body={body ?? ""} />}
+
+      {reference && referenceData && (
+        <div className="mt-4 w-full">
+          <h2 className="w-full">
+            <span className="border-b border-gray-300 w-full flex relative mb-3 mt-5">
+              <p className="absolute text-sm bg-white translate-y-[-50%] translate-x-[-50%] left-1/2 text-gray-500 dark:text-gray-400 px-3">
+                {data.subject.startsWith("Fwd:") ? "Forwarded" : "In reply to"}
+              </p>
+            </span>
+          </h2>
+          <MailMessage
+            messageId={reference}
+            accountId={props.accountId}
+            mailbox={props.mailbox}
+            isInChain={true}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -158,9 +158,15 @@ export class Imap {
         };
       },
       message: async (id: string) => {
-        const searchResults = await this.connection.search({
+        let searchResults = await this.connection.search({
           uid: id,
         });
+
+        if (!searchResults || searchResults.length < 1) {
+          searchResults = await this.connection.search({
+            header: { 'Message-ID': id },
+          });
+        }
 
         const msg = await this.connection.fetchOne(
           searchResults[0].toString(),
@@ -168,6 +174,7 @@ export class Imap {
             envelope: true,
             source: true,
             flags: true,
+            headers: true,
           },
         );
 
@@ -176,6 +183,34 @@ export class Imap {
         const flags: string[] = [];
 
         msg.flags.forEach((flag) => flags.push(flag));
+
+        const headers = Object.fromEntries(
+          msg.headers
+            .toString()
+            .split('\n')
+            .map((a) =>
+              a
+                .trim()
+                .split(': ')
+                .map((b) => b.trim()),
+            ),
+        );
+
+        const preview = convert(data.html ?? data.text ?? '', {
+          selectors: [
+            {
+              selector: 'a',
+              format: 'skip',
+            },
+            {
+              selector: 'img',
+              format: 'skip',
+            },
+          ],
+        })
+          .replace(/[\n\r]/g, ' ')
+          .trim()
+          .substring(0, 120);
 
         return {
           id: msg.uid.toString() ?? '',
@@ -186,7 +221,9 @@ export class Imap {
           },
           flags,
           body: data.html ?? data.text ?? '',
+          preview: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
           date: msg.envelope.date ?? new Date(0),
+          headers: headers,
         };
       },
       addFlag: async (id: string, flag: string) => {

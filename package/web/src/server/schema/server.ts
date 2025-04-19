@@ -137,6 +137,8 @@ const appRouter = t.router({
       flags: z.array(z.string()),
       body: z.string(),
       date: z.date(),
+      headers: z.record(z.string(), z.any()),
+      preview: z.string(),
     })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
     addMailMessageFlag: publicProcedure.input(z.object({
       accountId: z.string(),

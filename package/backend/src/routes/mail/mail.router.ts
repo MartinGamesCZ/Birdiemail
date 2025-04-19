@@ -78,6 +78,8 @@ export class MailRouter {
       flags: z.array(z.string()),
       body: z.string(),
       date: z.date(),
+      headers: z.record(z.string(), z.any()),
+      preview: z.string(),
     }),
   })
   async getMailMessage(
