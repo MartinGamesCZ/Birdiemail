@@ -55,6 +55,7 @@ export class Smtp {
     subject: string;
     body: string;
     attachments?: { filename: string; content: Buffer; contentType: string }[];
+    headers?: Record<string, string>;
   }) {
     return await this.connection.sendMail({
       from: data.from,
@@ -65,6 +66,7 @@ export class Smtp {
       text: data.body,
       html: data.body,
       attachments: data.attachments,
+      headers: data.headers,
     });
   }
 

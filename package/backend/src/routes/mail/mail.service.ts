@@ -183,6 +183,7 @@ export class MailService {
       bcc?: string;
       subject: string;
       body: string;
+      headers?: Record<string, string>;
       attachments: {
         name: string;
         content: string;
@@ -217,6 +218,7 @@ export class MailService {
       subject: data.subject,
       body: data.body,
       from: `${mailAccount.name} <${mailAccount.email}>`,
+      headers: data.headers,
       attachments: data.attachments.map((f) => ({
         content: Buffer.from(
           f.content.includes('base64,')

@@ -180,6 +180,7 @@ const appRouter = t.router({
             content: z.string(),
           }),
         ),
+        headers: z.record(z.string(), z.any()),
       }),
     })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })

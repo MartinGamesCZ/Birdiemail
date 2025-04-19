@@ -209,6 +209,7 @@ export class MailRouter {
             content: z.string(),
           }),
         ),
+        headers: z.record(z.string(), z.any()),
       }),
     }),
   })
@@ -227,6 +228,7 @@ export class MailRouter {
           name: string;
           content: string;
         }[];
+        headers: Record<string, any>;
       };
     },
   ) {

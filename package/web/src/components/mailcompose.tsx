@@ -60,6 +60,7 @@ export default function MailCompose({
   const [attachments, setAttachments] = useState<File[]>([]);
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [headers, setHeaders] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const router = useRouter();
@@ -84,18 +85,34 @@ export default function MailCompose({
           messageId: pSourceMessageId,
         });
 
-        setSubject(`Fwd: ${message.subject}`);
-        setBody(
-          [
-            `-------------- Forwarded message --------------`,
-            `From: ${message.sender.name} (${message.sender.email})`,
-            `To: ${to.join(", ")}`,
-            `Subject: ${message.subject}`,
-            `Date: ${new Date(message.date).toLocaleString()}`,
-            ``,
-            message.body,
-          ].join("<br />")
-        );
+        if (pAction === "forward") {
+          setSubject(`Fwd: ${message.subject}`);
+          setBody(
+            [
+              `---------- Forwarded message ---------`,
+              `From: ${message.sender.name} (${message.sender.email})`,
+              `To: ${to.join(", ")}`,
+              `Subject: ${message.subject}`,
+              `Date: ${new Date(message.date).toLocaleString()}`,
+              ``,
+              message.body,
+            ].join("<br />")
+          );
+          setHeaders({
+            References: (message.headers as any)["Message-ID"],
+            "In-Reply-To": (message.headers as any)["Message-ID"],
+          });
+        }
+
+        if (pAction == "reply") {
+          setSubject(`Re: ${message.subject}`);
+          setHeaders({
+            References:
+              (message.headers as any)["References"] ??
+              (message.headers as any)["Message-ID"],
+            "In-Reply-To": (message.headers as any)["Message-ID"],
+          });
+        }
       }
     })();
   }, []);
@@ -108,7 +125,6 @@ export default function MailCompose({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("Added file");
     if (e.target.files) {
       setAttachments([...attachments, ...Array.from(e.target.files)]);
     }
@@ -165,6 +181,7 @@ export default function MailCompose({
           subject,
           body,
           attachments: files,
+          headers: headers,
         },
       });
 

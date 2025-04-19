@@ -72,8 +72,9 @@ function MailToolbar(props: {
       label: loadingActions.reply ? "Loading..." : "Reply",
       onClick: () =>
         handleAction("reply", async () => {
-          // TODO
-          alert("Work in progress");
+          router.push(
+            `/mail/compose?action=reply&src-msg-id=${props.messageId}&src-msg-mbox=${props.mailbox}`
+          );
         }),
       disabled: loadingActions.reply,
     },
@@ -362,7 +363,7 @@ export function MailMessage(props: {
 
       {reference && referenceData && (
         <div className="mt-4 w-full">
-          <h2 className="w-full">
+          <h2 className="mr-4">
             <span className="border-b border-gray-300 w-full flex relative mb-3 mt-5">
               <p className="absolute text-sm bg-white translate-y-[-50%] translate-x-[-50%] left-1/2 text-gray-500 dark:text-gray-400 px-3">
                 {data.subject.startsWith("Fwd:") ? "Forwarded" : "In reply to"}

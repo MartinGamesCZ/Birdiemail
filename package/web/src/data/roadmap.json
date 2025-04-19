@@ -54,7 +54,7 @@
       },
       {
         "name": "Mail // Message reply chain",
-        "done": false
+        "done": true
       },
       {
         "name": "Mail // Message flags",
