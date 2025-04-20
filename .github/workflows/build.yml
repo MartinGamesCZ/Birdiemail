@@ -13,6 +13,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: SSH command
+        uses: appleboy/ssh-action@v0.1.0
+        with:
+          host: "de1.servers.remardev.com"
+          username: "root"
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            rm -rf /home/martin/birdie/package/web
+            rm -rf /home/martin/birdie/package/backend
+
       - name: SFTP uploader - Web
         uses: wangyucode/sftp-upload-action@v2.0.4
         with:
@@ -22,7 +32,6 @@ jobs:
           localDir: "./package/web"
           remoteDir: "/home/martin/birdie/package/web"
           exclude: ".*,node_modules,bun.lockb,dist"
-          forceUpload: true
 
       - name: SFTP uploader - Backend
         uses: wangyucode/sftp-upload-action@v2.0.4
@@ -33,7 +42,6 @@ jobs:
           localDir: "./package/backend"
           remoteDir: "/home/martin/birdie/package/backend"
           exclude: ".*,node_modules,bun.lockb,dist"
-          forceUpload: true
 
       - name: SSH command
         uses: appleboy/ssh-action@v0.1.0
