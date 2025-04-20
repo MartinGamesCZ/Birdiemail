@@ -1,0 +1,40 @@
+name: Build and push to hosting
+
+on:
+  push:
+    branches:
+      - prod
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: SFTP uploader
+        uses: wangyucode/sftp-upload-action@v2.0.4
+        with:
+          host: "de1.servers.remarev.com"
+          username: "root"
+          password: ${{ secrets.SSH_PASSWORD }}
+          localDir: "./package"
+          remoteDir: "/home/martin/birdie/package"
+          exclude: ".git*"
+
+      - name: SSH command
+        uses: appleboy/ssh-action@v0.1.0
+        with:
+          host: "de1.servers.remarev.com"
+          username: "root"
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |
+            source //.bashrc
+            cd /home/martin/birdie/package/backend
+            bun install
+            bun run build
+            cd /home/martin/birdie/package/web
+            bun install
+            WEB_TRPC_URL=http://10.74.0.3:3000/trpc NEXT_PUBLIC_TRPC_URL=https://app.birdiemail.social/api/trpc bun run build
+            docker compose restart web backend
