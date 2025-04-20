@@ -183,6 +183,24 @@ const appRouter = t.router({
         headers: z.record(z.string(), z.any()),
       }),
     })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+  }),
+  adminRouter: t.router({
+    isAuthorized: publicProcedure.output(z.object({
+      authorized: z.boolean(),
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    listUsers: publicProcedure.output(z.object({
+      users: z.array(
+        z.object({
+          id: z.string(),
+          email: z.string(),
+          name: z.string(),
+          createdAt: z.date(),
+        }),
+      ),
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    getStats: publicProcedure.output(z.object({
+      users: z.number(),
+    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   })
 });
 export type AppRouter = typeof appRouter;

@@ -2,6 +2,7 @@ import { DataSource } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { MailAccountEntity } from './mailaccount.entity';
 import { MailServerEntity } from './mailserver.entity';
+import { PermissionEntity } from './permission.entity';
 
 export const Db = new DataSource({
   type: 'postgres',
@@ -12,11 +13,12 @@ export const Db = new DataSource({
   database: process.env.BACKEND_DB_NAME,
   synchronize: true,
   logging: false,
-  entities: [UserEntity, MailAccountEntity, MailServerEntity],
+  entities: [UserEntity, MailAccountEntity, MailServerEntity, PermissionEntity],
 });
 
 export const Repo = {
   user: Db.getRepository(UserEntity),
   mailAccount: Db.getRepository(MailAccountEntity),
   mailServer: Db.getRepository(MailServerEntity),
+  permission: Db.getRepository(PermissionEntity),
 };

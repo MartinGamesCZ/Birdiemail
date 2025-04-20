@@ -6,6 +6,7 @@ import { DevController } from '../dev.controller';
 import { UserModule } from '../user/user.module';
 import { MailModule } from '../mail/mail.module';
 import { AppContext } from './app.context';
+import { AdminModule } from '../admin/admin.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AppContext } from './app.context';
     }),
     UserModule,
     MailModule,
+    AdminModule,
   ],
   controllers: [DevController],
   providers: [AppService, AppRouter],
