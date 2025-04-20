@@ -21,7 +21,8 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           localDir: "./package/web"
           remoteDir: "/home/martin/birdie/package/web"
-          exclude: ".git*"
+          exclude: ".*,node_modules,bun.lockb,dist"
+          forceUpload: true
 
       - name: SFTP uploader - Backend
         uses: wangyucode/sftp-upload-action@v2.0.4
@@ -31,7 +32,8 @@ jobs:
           password: ${{ secrets.SSH_PASSWORD }}
           localDir: "./package/backend"
           remoteDir: "/home/martin/birdie/package/backend"
-          exclude: ".git*"
+          exclude: ".*,node_modules,bun.lockb,dist"
+          forceUpload: true
 
       - name: SSH command
         uses: appleboy/ssh-action@v0.1.0
