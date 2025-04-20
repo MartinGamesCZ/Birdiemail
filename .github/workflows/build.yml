@@ -16,7 +16,7 @@ jobs:
       - name: SFTP uploader
         uses: wangyucode/sftp-upload-action@v2.0.4
         with:
-          host: "de1.servers.remarev.com"
+          host: "de1.servers.remardev.com"
           username: "root"
           password: ${{ secrets.SSH_PASSWORD }}
           localDir: "./package"
@@ -26,7 +26,7 @@ jobs:
       - name: SSH command
         uses: appleboy/ssh-action@v0.1.0
         with:
-          host: "de1.servers.remarev.com"
+          host: "de1.servers.remardev.com"
           username: "root"
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
