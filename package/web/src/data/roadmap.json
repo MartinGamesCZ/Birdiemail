@@ -69,6 +69,14 @@
         "done": false
       },
       {
+        "name": "Code // Refactor",
+        "done": false
+      },
+      {
+        "name": "Command centre // Add actions",
+        "done": false
+      },
+      {
         "name": "Internal // Admin panel",
         "done": false
       }

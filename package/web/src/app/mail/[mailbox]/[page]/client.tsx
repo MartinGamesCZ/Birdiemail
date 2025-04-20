@@ -159,7 +159,7 @@ function MailToolbar(props: {
         }),
       disabled: loadingActions["mark-unread"],
     },
-    {
+    /*{
       id: "report",
       icon: ExclamationTriangleIcon,
       label: loadingActions.report ? "Loading..." : "Report",
@@ -169,7 +169,7 @@ function MailToolbar(props: {
           alert("Work in progress");
         }),
       disabled: loadingActions.report,
-    },
+    },*/
     { id: "divider2", type: "divider" },
     {
       id: "delete",

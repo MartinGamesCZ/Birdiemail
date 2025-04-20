@@ -33,11 +33,11 @@ const Links = [
         icon: StarIcon,
         label: "Starred",
       },
-      {
+      /*{
         href: `/mail/${encodeURIComponent(Mailbox.Spam)}`,
         icon: ShieldExclamationIcon,
         label: "Spam",
-      },
+      },*/
       {
         href: `/mail/${encodeURIComponent(Mailbox.Trash)}`,
         icon: TrashIcon,
@@ -50,7 +50,7 @@ const Links = [
       },
     ],
   },
-  {
+  /*{
     type: "section_with_div",
     items: [
       {
@@ -69,7 +69,7 @@ const Links = [
         label: "Calendar",
       },
     ],
-  },
+  },*/
   {
     type: "section_with_gap",
     items: [

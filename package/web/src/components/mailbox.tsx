@@ -130,12 +130,12 @@ export default function Mailbox(props: {
           </DropdownMenu>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" size="icon">
+          {/*<Button variant="ghost" size="icon">
             <ClockIcon className="w-5 h-5 text-gray-500" />
           </Button>
           <Button variant="ghost" size="icon">
             <CalendarDaysIcon className="w-5 h-5 text-gray-500" />
-          </Button>
+          </Button>*/}
         </div>
       </div>
 
