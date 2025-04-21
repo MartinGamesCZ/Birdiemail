@@ -241,6 +241,38 @@ export class MailService {
     });
   }
 
+  async getMailboxes(
+    user: UserEntity,
+    encryptionKey: string,
+    accountId: string,
+  ) {
+    if (!user) return [];
+    if (!encryptionKey) return [];
+
+    const mailAccount = await Repo.mailAccount.findOne({
+      where: {
+        id: accountId,
+        user: {
+          id: user.id,
+        },
+      },
+      relations: ['mailServer'],
+      select: ['id', 'email', 'password', 'mailServer'],
+    });
+    if (!mailAccount) return [];
+
+    const connection = await this.establishImapConnection(
+      mailAccount.id,
+      mailAccount,
+      encryptionKey,
+    );
+
+    return (await connection.mailboxList()).map((m) => ({
+      name: m.name,
+      flags: m.flags,
+    }));
+  }
+
   private async establishImapConnection(
     id: string,
     mailAccount: MailAccountEntity,

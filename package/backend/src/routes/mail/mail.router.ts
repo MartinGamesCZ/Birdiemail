@@ -239,4 +239,27 @@ export class MailRouter {
       data.data,
     );
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Query({
+    input: z.object({
+      accountId: z.string(),
+    }),
+    output: z.array(
+      z.object({
+        name: z.string(),
+        flags: z.set(z.string()),
+      }),
+    ),
+  })
+  async getMailboxes(
+    @Ctx() context: any,
+    @Input() data: { accountId: string },
+  ) {
+    return await this.mailService.getMailboxes(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+    );
+  }
 }

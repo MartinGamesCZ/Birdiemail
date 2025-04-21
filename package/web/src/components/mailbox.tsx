@@ -76,6 +76,14 @@ export default function Mailbox(props: {
     router.push(url.toString());
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (!Cookies.get("current_account_id")) {
+      handleAccountChange(props.accounts[0]);
+    }
+  }, [props.accounts]);
+
   return (
     <Card className="px-7 py-5 gap-4 w-1/3 h-full flex flex-col">
       <div className="flex justify-between items-center">

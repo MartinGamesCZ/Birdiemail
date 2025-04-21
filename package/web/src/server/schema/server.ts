@@ -182,7 +182,15 @@ const appRouter = t.router({
         ),
         headers: z.record(z.string(), z.any()),
       }),
-    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    getMailboxes: publicProcedure.input(z.object({
+      accountId: z.string(),
+    })).output(z.array(
+      z.object({
+        name: z.string(),
+        flags: z.set(z.string()),
+      }),
+    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   adminRouter: t.router({
     isAuthorized: publicProcedure.output(z.object({
