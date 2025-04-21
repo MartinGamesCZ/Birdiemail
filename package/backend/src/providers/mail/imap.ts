@@ -26,27 +26,29 @@ export class Imap {
   }
 
   async connect() {
-    this.connection = new ImapFlow({
-      host: this.host,
-      port: Number(this.port),
-      secure: this.secure,
-      auth: {
-        user: this.user,
-        pass: this.password,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-      logger: false,
-    });
+    try {
+      this.connection = new ImapFlow({
+        host: this.host,
+        port: Number(this.port),
+        secure: this.secure,
+        auth: {
+          user: this.user,
+          pass: this.password,
+        },
+        tls: {
+          rejectUnauthorized: false,
+        },
+        logger: false,
+      });
 
-    this.connection.on('error', (err) => {
-      console.error('Connection error:', err);
+      this.connection.on('error', (err) => {
+        console.error('Connection error:', err);
 
-      this.connect();
-    });
+        this.connect();
+      });
 
-    await this.connection.connect().catch();
+      await this.connection.connect().catch();
+    } catch (e) {}
   }
 
   async isConnected() {

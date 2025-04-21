@@ -19,12 +19,7 @@ export async function hasPermission(
   userId: string,
   permission: Permission,
 ): Promise<boolean> {
-  console.log('Checking permission', userId, permission);
-
   const perms = await getUserPermissions(userId);
-
-  console.log('User permissions', perms.join(', '));
-  console.log('Match: ', perms.includes(permission));
 
   return perms.includes(permission);
 }
