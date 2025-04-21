@@ -111,6 +111,9 @@ export class Imap {
           body: string;
           date: Date;
           flags: string[];
+          files: {
+            name: string;
+          }[];
         }[] = [];
 
         for await (const msg of msgs) {
@@ -146,6 +149,10 @@ export class Imap {
             body: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
             date: msg.envelope.date ?? new Date(0),
             flags: flags,
+            files:
+              data.attachments?.map((a) => ({
+                name: a.filename ?? '',
+              })) ?? [],
           });
         }
 
@@ -226,6 +233,16 @@ export class Imap {
           preview: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
           date: msg.envelope.date ?? new Date(0),
           headers: headers,
+          files:
+            data.attachments?.map((a) => ({
+              name: a.filename,
+              id: a.contentId ?? '',
+              type: a.contentType.type,
+              content:
+                typeof a.body == 'string'
+                  ? a.body
+                  : Buffer.from(a.body).toString('base64'),
+            })) ?? [],
         };
       },
       addFlag: async (id: string, flag: string) => {

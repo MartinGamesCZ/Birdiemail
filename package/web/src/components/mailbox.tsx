@@ -7,6 +7,8 @@ import {
   ChevronDownIcon,
   PlusIcon,
   StarIcon,
+  DocumentTextIcon,
+  PaperClipIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { Avatar } from "./ui/avatar";
@@ -243,6 +245,22 @@ export default function Mailbox(props: {
                       >
                         {message.body.substring(0, 100)}...
                       </p>
+
+                      {message.files && message.files.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                          {message.files.map((file, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center p-1.5 bg-gray-100 dark:bg-gray-800/60 rounded text-xs text-gray-700 dark:text-gray-300"
+                            >
+                              <PaperClipIcon className="h-3 w-3 text-gray-500 mr-1" />
+                              <span className="truncate max-w-[100px]">
+                                {file.name || `File ${idx + 1}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>

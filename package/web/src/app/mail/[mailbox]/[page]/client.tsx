@@ -8,14 +8,18 @@ import { trpc } from "@/server/trpc";
 import { Mailbox } from "@/types/Mailbox";
 import { MailFlag } from "@/types/MailFlag";
 import { formatMailDate } from "@/utils/dateparser";
+import { formatByteSize } from "@/utils/format";
 import {
   ArrowDownLeftIcon,
+  ArrowDownTrayIcon,
   ArrowTurnLeftUpIcon,
   ArrowTurnUpLeftIcon,
   ArrowTurnUpRightIcon,
+  DocumentTextIcon,
   EnvelopeIcon,
   ExclamationTriangleIcon,
   ForwardIcon,
+  PaperClipIcon,
   StarIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
@@ -325,8 +329,6 @@ export function MailMessage(props: {
         `<div class="gmail_quote gmail_quote_container">`
       )?.[0] ?? "";
 
-  console.log(data?.headers);
-
   return isLoading || !data ? (
     <Spinner fullScreen color="primary" size="lg" />
   ) : (
@@ -358,6 +360,60 @@ export function MailMessage(props: {
       </div>
 
       {!props.isInChain && <MailToolbar {...props} message={data} />}
+
+      {data.files.length > 0 && (
+        <div className="mt-4 mb-4 mr-4">
+          <div className="flex items-center mb-2">
+            <PaperClipIcon className="h-5 w-5 text-gray-500 mr-2" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Attachments ({data.files.length})
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {data.files.map((file, index) => (
+              <div
+                key={index}
+                className="flex items-center p-2 bg-gray-100 dark:bg-gray-800 rounded-md max-w-full"
+              >
+                <DocumentTextIcon className="h-5 w-5 text-gray-500 mr-2 flex-shrink-0" />
+                <span className="text-sm truncate max-w-[200px]">
+                  {file.name}
+                </span>
+                <span className="text-xs text-gray-500 ml-2">
+                  {formatByteSize(Math.ceil(file.content.length / 4) * 3)}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2"
+                  onClick={() => {
+                    const blob = new Blob(
+                      [Buffer.from(file.content, "base64")],
+                      {
+                        type: file.type,
+                      }
+                    );
+
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+
+                    a.href = url;
+                    a.download = file.name;
+
+                    a.click();
+
+                    URL.revokeObjectURL(url);
+                    a.remove();
+                  }}
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {data?.preview.split("---------- Forwarded message ---------")[0].trim()
         .length > 0 && <Mailview body={body ?? ""} />}
 

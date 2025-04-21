@@ -269,7 +269,7 @@ export class MailService {
 
     return (await connection.mailboxList()).map((m) => ({
       name: m.name,
-      flags: m.flags,
+      flags: [m.specialUse ?? ''],
     }));
   }
 
