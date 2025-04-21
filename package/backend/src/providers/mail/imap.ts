@@ -52,10 +52,12 @@ export class Imap {
   }
 
   async isConnected() {
-    return (
-      this.connection.authenticated &&
-      (await this.connection.list().catch(() => '@err')) != '@err'
-    );
+    try {
+      return (
+        this.connection.authenticated &&
+        (await this.connection.list().catch(() => '@err')) != '@err'
+      );
+    } catch (e) {}
   }
 
   async mailboxList() {
