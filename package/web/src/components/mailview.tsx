@@ -35,8 +35,15 @@ export function Mailview(props: { body: string }) {
     iframe.onload = () => {
       resizeIframe();
 
-      if (iframe.contentDocument)
+      console.log(iframe.contentDocument);
+
+      if (iframe.contentDocument) {
+        iframe.contentDocument.head.innerHTML += `<style>@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('${location.origin}/fonts/plus_jakarta_sans.ttf') format('truetype');
+}</style>`;
         iframe.contentDocument.body.style.fontFamily = "Plus Jakarta Sans";
+      }
     };
 
     if (iframe.contentWindow) {
