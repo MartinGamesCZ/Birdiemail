@@ -114,6 +114,11 @@ const appRouter = t.router({
           body: z.string(),
           flags: z.array(z.string()),
           date: z.date(),
+          files: z.array(
+            z.object({
+              name: z.string(),
+            }),
+          ),
         }),
       ),
       meta: z.object({
@@ -139,6 +144,14 @@ const appRouter = t.router({
       date: z.date(),
       headers: z.record(z.string(), z.any()),
       preview: z.string(),
+      files: z.array(
+        z.object({
+          name: z.string(),
+          content: z.string(),
+          type: z.string(),
+          id: z.string(),
+        }),
+      ),
     })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
     addMailMessageFlag: publicProcedure.input(z.object({
       accountId: z.string(),
@@ -182,7 +195,15 @@ const appRouter = t.router({
         ),
         headers: z.record(z.string(), z.any()),
       }),
-    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    getMailboxes: publicProcedure.input(z.object({
+      accountId: z.string(),
+    })).output(z.array(
+      z.object({
+        name: z.string(),
+        flags: z.array(z.string()),
+      }),
+    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   adminRouter: t.router({
     isAuthorized: publicProcedure.output(z.object({

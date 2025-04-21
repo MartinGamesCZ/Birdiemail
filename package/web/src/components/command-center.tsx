@@ -13,6 +13,9 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { toggleTheme } from "@/providers/ThemeProvider";
 import { IS_DEV } from "@/config";
+import { useQuery } from "@tanstack/react-query";
+import { trpc } from "@/server/trpc";
+import Cookies from "js-cookie";
 
 interface CommandCenterProps {
   isOpen: boolean;
@@ -35,6 +38,19 @@ export function CommandCenter({ isOpen, setIsOpen }: CommandCenterProps) {
   const [query, setQuery] = useState("");
   const router = useRouter();
 
+  const { data: adminAccess } = useQuery({
+    queryKey: ["user", "isAdmin"],
+    queryFn: async () => await trpc.adminRouter.isAuthorized.query(),
+  });
+
+  const { data: mailboxes } = useQuery({
+    queryKey: ["mail", "mailboxes", Cookies.get("current_account_id") ?? ""],
+    queryFn: async () =>
+      await trpc.mailRouter.getMailboxes.query({
+        accountId: Cookies.get("current_account_id") ?? "",
+      }),
+  });
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
@@ -43,6 +59,8 @@ export function CommandCenter({ isOpen, setIsOpen }: CommandCenterProps) {
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [setIsOpen]);
+
+  console.log(mailboxes);
 
   const commands: Command[] = [
     ...(IS_DEV
@@ -57,15 +75,66 @@ export function CommandCenter({ isOpen, setIsOpen }: CommandCenterProps) {
               setIsOpen(false);
             },
           },
+          {
+            id: "reload-page",
+            name: "[DEV] Reload page",
+            description: "Reload the current page -- DEV ONLY",
+            type: "action",
+            action: () => {
+              location.reload();
+
+              setIsOpen(false);
+            },
+          },
         ] as Command[])
       : []),
+    ...(adminAccess?.authorized
+      ? ([
+          {
+            id: "goto-admin",
+            name: "[ADMIN] Go to admin panel",
+            description: "Open the admin panel -- ADMIN ONLY",
+            type: "navigation",
+            action: () => {
+              router.push("/admin");
+              setIsOpen(false);
+            },
+          },
+        ] as Command[])
+      : []),
+    ...(mailboxes
+      ? mailboxes.map(
+          (box) =>
+            ({
+              id: "goto-mailbox-" + box.name.toLowerCase().replaceAll(" ", "_"),
+              name: "Go to " + box.name.toLowerCase(),
+              description: "View your '" + box.name.toLowerCase() + "' mailbox",
+              type: "mail",
+              action: () => {
+                router.push("/mail/" + box.name);
+                setIsOpen(false);
+              },
+            } as Command)
+        )
+      : ([
+          {
+            id: "goto-inbox",
+            name: "Go to Inbox",
+            description: "View your inbox messages",
+            type: "navigation",
+            action: () => {
+              router.push("/mail");
+              setIsOpen(false);
+            },
+          },
+        ] as Command[])),
     {
-      id: "goto-inbox",
-      name: "Go to Inbox",
-      description: "View your inbox messages",
+      id: "goto-compose",
+      name: "Compose New Message",
+      description: "Compose a new email message",
       type: "navigation",
       action: () => {
-        router.push("/mail");
+        router.push("/mail/compose");
         setIsOpen(false);
       },
     },

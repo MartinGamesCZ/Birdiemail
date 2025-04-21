@@ -38,6 +38,11 @@ export class MailRouter {
           body: z.string(),
           flags: z.array(z.string()),
           date: z.date(),
+          files: z.array(
+            z.object({
+              name: z.string(),
+            }),
+          ),
         }),
       ),
       meta: z.object({
@@ -80,19 +85,29 @@ export class MailRouter {
       date: z.date(),
       headers: z.record(z.string(), z.any()),
       preview: z.string(),
+      files: z.array(
+        z.object({
+          name: z.string(),
+          content: z.string(),
+          type: z.string(),
+          id: z.string(),
+        }),
+      ),
     }),
   })
   async getMailMessage(
     @Ctx() context: any,
     @Input() data: { accountId: string; mailbox: string; messageId: string },
   ) {
-    return await this.mailService.getMailMessage(
+    const res = await this.mailService.getMailMessage(
       context.user,
       context.encryptionKey,
       data.accountId,
       data.mailbox,
       data.messageId,
     );
+
+    return res;
   }
 
   @UseMiddlewares(AuthMiddleware)
@@ -237,6 +252,29 @@ export class MailRouter {
       context.encryptionKey,
       data.accountId,
       data.data,
+    );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Query({
+    input: z.object({
+      accountId: z.string(),
+    }),
+    output: z.array(
+      z.object({
+        name: z.string(),
+        flags: z.array(z.string()),
+      }),
+    ),
+  })
+  async getMailboxes(
+    @Ctx() context: any,
+    @Input() data: { accountId: string },
+  ) {
+    return await this.mailService.getMailboxes(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
     );
   }
 }

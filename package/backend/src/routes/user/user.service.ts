@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { compareSync, hashSync } from 'bcrypt';
 import { randomUUID } from 'crypto';
+import { IS_DEV, PUBLIC_WEB_URL } from 'src/config';
 import { Repo } from 'src/db/_index';
 import { UserEntity } from 'src/db/user.entity';
 import { AutomatedMail, AutomatedMailType } from 'src/providers/mail/automated';
 import { Imap } from 'src/providers/mail/imap';
+import { sendDiscordWebhook } from 'src/providers/webhook/discord';
 import { Response } from 'src/types/response/_index';
 import {
   createUserToken,
@@ -59,9 +61,15 @@ export class UserService {
       currentYear: new Date().getFullYear().toString(),
       termsUrl: `${process.env.NET_WEB_PUB}/terms`,
       privacyPolicyUrl: `${process.env.NET_WEB_PUB}/privacy`,
+      logoUrl: `${PUBLIC_WEB_URL}/birdie_logo_text.png`,
     });
 
     await verificationMail.send(email);
+
+    await sendDiscordWebhook(
+      'Wohoooo! We have a new user! <@734854849157660692>' +
+        (IS_DEV ? '\n-# Development mode' : ''),
+    );
 
     return OkResponse({});
   }

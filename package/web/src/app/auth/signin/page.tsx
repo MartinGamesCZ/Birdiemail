@@ -10,6 +10,7 @@ import { trpc } from "@/server/trpc";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
+import Image from "next/image";
 
 export default function Page() {
   const [email, setEmail] = useState("");
@@ -55,12 +56,15 @@ export default function Page() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Birdiemail
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Mail client of the future
-          </p>
+          <div className="flex justify-center">
+            <Image
+              src="/birdie_logo_text.png"
+              alt="Birdiemail Logo"
+              width={150}
+              height={150}
+              priority
+            />
+          </div>
         </div>
 
         <Card className="shadow-lg">
@@ -130,7 +134,7 @@ export default function Page() {
               </Button>
             </form>
 
-            <div className="mt-6 relative">
+            {/*<div className="mt-6 relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300 dark:border-gray-700"></div>
               </div>
@@ -208,7 +212,7 @@ export default function Page() {
                   <path fill="#ffb900" d="M12 12h10v10H12z" />
                 </svg>
               </Button>
-            </div>
+            </div>*/}
 
             <div className="mt-6 text-center text-sm">
               <span className="text-gray-600 dark:text-gray-400">

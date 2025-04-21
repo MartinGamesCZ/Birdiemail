@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EnvelopeIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function SignedUpPage() {
@@ -10,12 +11,15 @@ export default function SignedUpPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Birdiemail
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Mail client of the future
-          </p>
+          <div className="flex justify-center">
+            <Image
+              src="/birdie_logo_text.png"
+              alt="Birdiemail Logo"
+              width={150}
+              height={150}
+              priority
+            />
+          </div>
         </div>
 
         <Card className="shadow-lg">
