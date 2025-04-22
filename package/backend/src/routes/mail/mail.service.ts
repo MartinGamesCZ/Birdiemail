@@ -39,7 +39,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection.mailbox(mailbox)).list(page);
+    return await (await connection!.mailbox(mailbox)).list(page);
   }
 
   async getMailMessage(
@@ -70,7 +70,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection.mailbox(mailbox)).message(messageId);
+    return await (await connection!.mailbox(mailbox)).message(messageId);
   }
 
   async addMailMessageFlag(
@@ -102,7 +102,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection.mailbox(mailbox)).addFlag(messageId, flag);
+    return await (await connection!.mailbox(mailbox)).addFlag(messageId, flag);
   }
 
   async removeMailMessageFlag(
@@ -135,7 +135,7 @@ export class MailService {
     );
 
     return await (
-      await connection.mailbox(mailbox)
+      await connection!.mailbox(mailbox)
     ).removeFlag(messageId, flag);
   }
 
@@ -169,7 +169,7 @@ export class MailService {
     );
 
     return await (
-      await connection.mailbox(mailbox)
+      await connection!.mailbox(mailbox)
     ).move(messageId, destination);
   }
 
@@ -267,7 +267,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return (await connection.mailboxList()).map((m) => ({
+    return (await connection!.mailboxList()).map((m) => ({
       name: m.name,
       flags: [m.specialUse ?? ''],
     }));
@@ -289,9 +289,9 @@ export class MailService {
         secure: mailAccount.mailServer.imapSecure,
       });
 
-    if (!connection.isConnected()) await connection.connect();
+    if (!connection || !connection.isConnected()) await connection!.connect();
 
-    this.imapConnections.set(id, connection);
+    this.imapConnections.set(id, connection!);
 
     return connection;
   }
