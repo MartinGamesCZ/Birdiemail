@@ -106,6 +106,11 @@ export default function MailCompose({
 
         if (pAction == "reply") {
           setSubject(`Re: ${message.subject}`);
+          setTo(
+            (
+              (message.headers as any)["Reply-To"] || message.sender.email
+            ).split(",")
+          );
           setHeaders({
             References:
               (message.headers as any)["References"] ??

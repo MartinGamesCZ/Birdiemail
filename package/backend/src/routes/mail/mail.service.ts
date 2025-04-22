@@ -278,22 +278,24 @@ export class MailService {
     mailAccount: MailAccountEntity,
     encryptionKey: string,
   ) {
-    let connection = this.imapConnections.get(id);
+    try {
+      let connection = this.imapConnections.get(id);
 
-    if (!connection)
-      connection = await Imap.connect({
-        host: mailAccount.mailServer.imapAddress,
-        port: mailAccount.mailServer.imapPort,
-        user: mailAccount.email,
-        password: decryptMailPassword(encryptionKey, mailAccount.password),
-        secure: mailAccount.mailServer.imapSecure,
-      });
+      if (!connection)
+        connection = await Imap.connect({
+          host: mailAccount.mailServer.imapAddress,
+          port: mailAccount.mailServer.imapPort,
+          user: mailAccount.email,
+          password: decryptMailPassword(encryptionKey, mailAccount.password),
+          secure: mailAccount.mailServer.imapSecure,
+        });
 
-    if (!connection || !connection.isConnected()) await connection!.connect();
+      if (!connection || !connection.isConnected()) await connection!.connect();
 
-    this.imapConnections.set(id, connection!);
+      this.imapConnections.set(id, connection!);
 
-    return connection;
+      return connection;
+    } catch (e) {}
   }
 
   private async establishSmtpConnection(
