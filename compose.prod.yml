@@ -14,10 +14,8 @@ services:
     command: ["npm", "run", "start"]
     restart: always
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.marti_birdie_frontend.entrypoints.loadbalancer.server.port=3000
       - traefik.http.routers.marti_birdie_frontend.rule=Host(`app.birdiemail.social`)
-      - traefik.docker.network=birdie
+      - traefik.docker.network=prod_birdie
     env_file:
       - ../.env
     networks:
@@ -33,10 +31,8 @@ services:
     command: ["npm", "run", "start"]
     restart: always
     labels:
-      - traefik.enable=true
-      - traefik.http.routers.marti_birdie_frontend.entrypoints.loadbalancer.server.port=3000
       - traefik.http.routers.marti_birdie_frontend.rule=Host(`api.birdiemail.social`)
-      - traefik.docker.network=birdie
+      - traefik.docker.network=prod_birdie
     env_file:
       - ../.env
     networks:
