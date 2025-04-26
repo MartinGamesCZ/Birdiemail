@@ -196,6 +196,11 @@ const appRouter = t.router({
         }),
       ),
     })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    getRawMailMessage: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    })).output(z.string()).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
     addMailMessageFlag: publicProcedure.input(z.object({
       accountId: z.string(),
       mailbox: z.string(),

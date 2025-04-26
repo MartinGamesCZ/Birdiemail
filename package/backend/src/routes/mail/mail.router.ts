@@ -111,6 +111,33 @@ export class MailRouter {
   }
 
   @UseMiddlewares(AuthMiddleware)
+  @Query({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    }),
+    output: z.string(),
+  })
+  async getRawMailMessage(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      mailbox: string;
+      messageId: string;
+    },
+  ) {
+    return await this.mailService.getRawMailMessage(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
+    );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
   @Mutation({
     input: z.object({
       accountId: z.string(),

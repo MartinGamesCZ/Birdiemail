@@ -119,7 +119,7 @@ export class Imap {
                 },
               };
 
-            const mesagesTotal = mbox.exists;
+            const mesagesTotal = mbox!.exists;
             const perPage = 20;
             const pages = Math.ceil(mesagesTotal / perPage);
             const startMessage = Math.max(mbox.exists - perPage * page + 1, 1);
@@ -280,6 +280,24 @@ export class Imap {
                       : Buffer.from(a.body).toString('base64'),
                 })) ?? [],
             };
+          } catch (e) {
+            console.trace(e);
+          }
+        },
+        rawMessage: async (id: string) => {
+          try {
+            const searchResults = await this.connection.search({
+              uid: id,
+            });
+
+            const msg = await this.connection.fetchOne(
+              searchResults[0].toString(),
+              {
+                source: true,
+              },
+            );
+
+            return msg.source.toString();
           } catch (e) {
             console.trace(e);
           }
