@@ -32,11 +32,11 @@ jobs:
           username: "root"
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
-            source /root/.bashrc
+            docker compose -f /var/lib/marti/birdie/prod/compose.prod.yml down
             cd /var/lib/marti/birdie/prod/package/backend
-            source /root/.bashrc && bun install
-            source /root/.bashrc && bun run build
+            /root/.bun/bin/bun install
+            /root/.bun/bin/bun run build
             cd /var/lib/marti/birdie/prod/package/web
-            source /root/.bashrc && bun install
-            source /root/.bashrc && WEB_TRPC_URL=http://10.74.0.3:3000/trpc NEXT_PUBLIC_TRPC_URL=https://api.birdiemail.social/trpc bun run build
-            docker compose -f /var/lib/marti/birdie/prod/compose.prod.yml restart web backend
+            /root/.bun/bin/bun install
+            WEB_TRPC_URL=http://10.74.0.3:3000/trpc NEXT_PUBLIC_TRPC_URL=https://api.birdiemail.social/trpc /root/.bun/bin/bun run build
+            docker compose -f /var/lib/marti/birdie/prod/compose.prod.yml up -d
