@@ -14,6 +14,7 @@ import {
   EnvelopeIcon,
   TrashIcon,
   EllipsisHorizontalIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { Avatar } from "./ui/avatar";
@@ -112,6 +113,12 @@ export default function Mailbox(props: {
     }
   };
 
+  const handleRefresh = () => {
+    queryClient.refetchQueries({
+      queryKey: ["mailbox", props.currentAccount, props.boxId, props.page],
+    });
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -174,6 +181,12 @@ export default function Mailbox(props: {
           </DropdownMenu>
         </div>
         <div className="flex gap-2">
+          <Button variant="ghost" size="icon">
+            <ArrowPathIcon
+              className="w-5 h-5 text-gray-500"
+              onClick={handleRefresh}
+            />
+          </Button>
           {/*<Button variant="ghost" size="icon">
             <ClockIcon className="w-5 h-5 text-gray-500" />
           </Button>
