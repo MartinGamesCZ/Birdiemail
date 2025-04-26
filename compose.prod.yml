@@ -13,6 +13,8 @@ services:
     working_dir: /app/web
     command: ["npm", "run", "start"]
     restart: always
+    labels:
+      - traefik.http.routers.marti_birdie_frontend.rule=Host(`app.birdiemail.social`)
     env_file:
       - ../.env
     networks:
@@ -27,6 +29,8 @@ services:
     working_dir: /app/backend
     command: ["npm", "run", "start"]
     restart: always
+    labels:
+      - traefik.http.routers.marti_birdie_backend.rule=Host(`api.birdiemail.social`)
     env_file:
       - ../.env
     networks:
