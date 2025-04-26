@@ -48,7 +48,9 @@ export class Imap {
       });
 
       await this.connection.connect().catch();
-    } catch (e) {}
+    } catch (e) {
+      console.trace(e);
+    }
   }
 
   async isConnected() {
@@ -58,6 +60,8 @@ export class Imap {
         (await this.connection.list().catch(() => '@err')) != '@err'
       );
     } catch (e) {
+      console.trace(e);
+
       return false;
     }
   }
@@ -66,6 +70,8 @@ export class Imap {
     try {
       return await this.connection.list().catch();
     } catch (e) {
+      console.trace(e);
+
       return [];
     }
   }
@@ -85,6 +91,8 @@ export class Imap {
 
     return {
       list: async (page: number = 1) => {
+        if (!mbox) return null;
+
         try {
           if (mbox.exists == 0)
             return {
@@ -175,7 +183,9 @@ export class Imap {
               perPage,
             },
           };
-        } catch (e) {}
+        } catch (e) {
+          console.trace(e);
+        }
       },
       message: async (id: string) => {
         try {
@@ -256,7 +266,9 @@ export class Imap {
                     : Buffer.from(a.body).toString('base64'),
               })) ?? [],
           };
-        } catch (e) {}
+        } catch (e) {
+          console.trace(e);
+        }
       },
       addFlag: async (id: string, flag: string) => {
         try {
@@ -272,7 +284,9 @@ export class Imap {
             id: searchResults[0].toString(),
             flag,
           };
-        } catch (e) {}
+        } catch (e) {
+          console.trace(e);
+        }
       },
       removeFlag: async (id: string, flag: string) => {
         try {
@@ -289,7 +303,9 @@ export class Imap {
             id: searchResults[0].toString(),
             flag,
           };
-        } catch (e) {}
+        } catch (e) {
+          console.trace(e);
+        }
       },
       move: async (id: string, destination: string) => {
         try {
@@ -305,7 +321,9 @@ export class Imap {
           return {
             id: searchResults[0].toString(),
           };
-        } catch (e) {}
+        } catch (e) {
+          console.trace(e);
+        }
       },
     };
   }
@@ -322,6 +340,8 @@ export class Imap {
       await instance.connect().catch();
 
       return instance;
-    } catch (e) {}
+    } catch (e) {
+      console.trace(e);
+    }
   }
 }

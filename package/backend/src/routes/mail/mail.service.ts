@@ -39,7 +39,20 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection!.mailbox(mailbox)).list(page);
+    const res = await (await connection!.mailbox(mailbox)).list(page);
+
+    if (!res) {
+      const connection = await this.establishImapConnection(
+        mailAccount.id,
+        mailAccount,
+        encryptionKey,
+        true,
+      );
+
+      return await (await connection!.mailbox(mailbox)).list(page);
+    }
+
+    return res;
   }
 
   async getMailMessage(
@@ -277,11 +290,12 @@ export class MailService {
     id: string,
     mailAccount: MailAccountEntity,
     encryptionKey: string,
+    forceReconnect: boolean = false,
   ) {
     try {
       let connection = this.imapConnections.get(id);
 
-      if (!connection)
+      if (!connection || forceReconnect)
         connection = await Imap.connect({
           host: mailAccount.mailServer.imapAddress,
           port: mailAccount.mailServer.imapPort,
