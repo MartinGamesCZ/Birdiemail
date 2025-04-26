@@ -17,6 +17,7 @@ import { trpc } from "@/server/trpc";
 import { toast } from "react-toastify";
 import { useRouter } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
+import Cookies from "js-cookie";
 
 // Common email providers configuration
 const emailProviders = [
@@ -146,6 +147,11 @@ export default function SetupEmailAccountPage() {
 
       return;
     }
+
+    Cookies.set("current_account_id", data.data.id, {
+      expires: 30,
+      path: "/",
+    });
 
     router.push("/mail");
   };

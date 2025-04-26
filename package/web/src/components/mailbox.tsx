@@ -78,6 +78,7 @@ export default function Mailbox(props: {
 
     Cookies.set("current_account_id", account.id, {
       expires: 30,
+      path: "/",
     });
 
     // Remove messageId search param
