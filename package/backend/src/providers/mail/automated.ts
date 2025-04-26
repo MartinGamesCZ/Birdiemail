@@ -25,7 +25,7 @@ export class AutomatedMail {
     this.body = Handlebars.compile(this.body)(placeholders);
   }
 
-  async send(to: string) {
+  async send(to: string, title: string) {
     const connection = new Smtp({
       host: process.env.MAILACC_CMN_SMTP_HOST ?? '',
       port: process.env.MAILACC_CMN_SMTP_PORT ?? '587',
@@ -42,7 +42,7 @@ export class AutomatedMail {
     return await connection.send({
       from: `"Birdiemail" <${process.env.MAILACC_NOREPLY_EMAIL}>`,
       to,
-      subject: 'Birdiemail - Verify your email address',
+      subject: title,
       body: this.body,
     });
   }

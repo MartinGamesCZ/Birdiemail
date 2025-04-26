@@ -64,7 +64,10 @@ export class UserService {
       logoUrl: `${PUBLIC_WEB_URL}/birdie_logo_text.png`,
     });
 
-    await verificationMail.send(email);
+    await verificationMail.send(
+      email,
+      'Birdiemail - Verify your email address',
+    );
 
     await sendDiscordWebhook(
       'Wohoooo! We have a new user! <@734854849157660692>' +
@@ -288,7 +291,7 @@ export class UserService {
       logoUrl: `${PUBLIC_WEB_URL}/birdie_logo_text.png`,
     });
 
-    await resetMail.send(email);
+    await resetMail.send(email, 'Birdiemail - Reset your password');
 
     return OkResponse({});
   }

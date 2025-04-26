@@ -2,6 +2,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './routes/app/app.module';
 import { Db } from './db/_index';
 import { json } from 'express';
+import { AutomatedMail, AutomatedMailType } from './providers/mail/automated';
+import { PUBLIC_WEB_URL } from './config';
 
 async function bootstrap() {
   await Db.initialize();
@@ -13,5 +15,19 @@ async function bootstrap() {
   app.enableCors('*');
 
   await app.listen(process.env.PORT ?? 3000);
+
+  /*const m = new AutomatedMail('alpha-testing' as unknown as AutomatedMailType);
+
+  m.insertPlaceholders({
+    name: 'Martin',
+    logoUrl: `${PUBLIC_WEB_URL}/birdie_logo_text.png`,
+    activationLink: `${PUBLIC_WEB_URL}/onboarding/alpha-testing`,
+    currentYear: new Date().getFullYear().toString(),
+  });
+
+  await m.send(
+    'martinpetrnp@gmail.com',
+    'Ready, set, go! Birdiemail is now alpha testing! 🚀',
+  );*/
 }
 bootstrap();

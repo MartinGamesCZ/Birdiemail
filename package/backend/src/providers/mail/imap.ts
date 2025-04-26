@@ -66,80 +66,182 @@ export class Imap {
     }
   }
 
-  async mailboxList() {
+  async mailboxList(retryCount = 0) {
     try {
-      return await this.connection.list().catch();
+      return await this.connection.list().catch(async (err) => {
+        if (retryCount < 3) {
+          await this.connect().catch();
+          return this.mailboxList(retryCount + 1);
+        }
+        throw err;
+      });
     } catch (e) {
       console.trace(e);
-
       return null;
     }
   }
 
-  async mailbox(id: string) {
-    id = decodeURIComponent(id);
+  async mailbox(id: string, retryCount = 0) {
+    try {
+      id = decodeURIComponent(id);
 
-    if (id.startsWith('@')) {
-      const boxes = await this.mailboxList().catch();
+      if (id.startsWith('@')) {
+        const boxes = await this.mailboxList().catch();
 
-      if (!boxes) return null;
+        if (!boxes) return null;
 
-      id = boxes.find((a) => a.specialUse == `\\${id.slice(1)}`)?.path ?? '';
-    }
+        id = boxes.find((a) => a.specialUse == `\\${id.slice(1)}`)?.path ?? '';
+      }
 
-    const mbox = await this.connection
-      .mailboxOpen(decodeURIComponent(id).replace(/\:/gm, '/'))
-      .catch();
+      const mbox = await this.connection
+        .mailboxOpen(decodeURIComponent(id).replace(/\:/gm, '/'))
+        .catch(async (err) => {
+          if (retryCount < 3) {
+            await this.connect().catch();
+            return this.mailbox(id, retryCount + 1);
+          }
+          throw err;
+        });
 
-    return {
-      list: async (page: number = 1) => {
-        if (!mbox) return null;
+      return {
+        list: async (page: number = 1) => {
+          if (!mbox) return null;
 
-        try {
-          if (mbox.exists == 0)
+          try {
+            if (mbox.exists == 0)
+              return {
+                data: [],
+                meta: {
+                  page,
+                  total: 0,
+                  totalPages: 0,
+                  perPage: 0,
+                },
+              };
+
+            const mesagesTotal = mbox.exists;
+            const perPage = 20;
+            const pages = Math.ceil(mesagesTotal / perPage);
+            const startMessage = Math.max(mbox.exists - perPage * page + 1, 1);
+            const endMessage =
+              page == 1 ? '*' : mbox.exists - perPage * (page - 1);
+            const range = `${startMessage}:${endMessage}`;
+
+            const msgs = await this.connection.fetch(range, {
+              envelope: true,
+              source: true,
+              flags: true,
+            });
+
+            let result: {
+              id: string;
+              subject: string;
+              sender: {
+                name: string;
+                email: string;
+              };
+              body: string;
+              date: Date;
+              flags: string[];
+              files: {
+                name: string;
+              }[];
+            }[] = [];
+
+            for await (const msg of msgs) {
+              const data = extract(msg.source.toString());
+
+              let preview = convert(data.html ?? data.text ?? '', {
+                selectors: [
+                  {
+                    selector: 'a',
+                    format: 'skip',
+                  },
+                  {
+                    selector: 'img',
+                    format: 'skip',
+                  },
+                ],
+              })
+                .replace(/[\n\r]/g, ' ')
+                .trim()
+                .substring(0, 120);
+
+              const flags: string[] = [];
+
+              msg.flags.forEach((flag) => flags.push(flag));
+
+              result.push({
+                id: msg.uid.toString() ?? '',
+                subject: data.subject ?? '',
+                sender: {
+                  name: data.from?.name ?? '',
+                  email: data.from?.address ?? '',
+                },
+                body: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
+                date: msg.envelope.date ?? new Date(0),
+                flags: flags,
+                files:
+                  data.attachments?.map((a) => ({
+                    name: a.filename ?? '',
+                  })) ?? [],
+              });
+            }
+
             return {
-              data: [],
+              data: result.reverse(),
               meta: {
                 page,
-                total: 0,
-                totalPages: 0,
-                perPage: 0,
+                total: mesagesTotal,
+                totalPages: pages,
+                perPage,
               },
             };
+          } catch (e) {
+            console.trace(e);
+          }
+        },
+        message: async (id: string) => {
+          try {
+            let searchResults = await this.connection.search({
+              uid: id,
+            });
 
-          const mesagesTotal = mbox.exists;
-          const perPage = 20;
-          const pages = Math.ceil(mesagesTotal / perPage);
-          const startMessage = Math.max(mbox.exists - perPage * page + 1, 1);
-          const endMessage =
-            page == 1 ? '*' : mbox.exists - perPage * (page - 1);
-          const range = `${startMessage}:${endMessage}`;
+            if (!searchResults || searchResults.length < 1) {
+              searchResults = await this.connection.search({
+                header: { 'Message-ID': id },
+              });
+            }
 
-          const msgs = await this.connection.fetch(range, {
-            envelope: true,
-            source: true,
-            flags: true,
-          });
+            const msg = await this.connection.fetchOne(
+              searchResults[0].toString(),
+              {
+                envelope: true,
+                source: true,
+                flags: true,
+                headers: true,
+              },
+            );
 
-          let result: {
-            id: string;
-            subject: string;
-            sender: {
-              name: string;
-              email: string;
-            };
-            body: string;
-            date: Date;
-            flags: string[];
-            files: {
-              name: string;
-            }[];
-          }[] = [];
-
-          for await (const msg of msgs) {
             const data = extract(msg.source.toString());
 
-            let preview = convert(data.html ?? data.text ?? '', {
+            const flags: string[] = [];
+
+            msg.flags.forEach((flag) => flags.push(flag));
+
+            const headers = Object.fromEntries(
+              msg.headers
+                .toString()
+                .split('\n')
+                .map((a) =>
+                  a
+                    .trim()
+                    .split(': ')
+                    .map((b) => b.trim()),
+                ),
+            );
+
+            const preview = convert(data.html ?? data.text ?? '', {
               selectors: [
                 {
                   selector: 'a',
@@ -155,179 +257,92 @@ export class Imap {
               .trim()
               .substring(0, 120);
 
-            const flags: string[] = [];
-
-            msg.flags.forEach((flag) => flags.push(flag));
-
-            result.push({
+            return {
               id: msg.uid.toString() ?? '',
               subject: data.subject ?? '',
               sender: {
                 name: data.from?.name ?? '',
                 email: data.from?.address ?? '',
               },
-              body: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
+              flags,
+              body: data.html ?? data.text ?? '',
+              preview: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
               date: msg.envelope.date ?? new Date(0),
-              flags: flags,
+              headers: headers,
               files:
                 data.attachments?.map((a) => ({
-                  name: a.filename ?? '',
+                  name: a.filename,
+                  id: a.contentId ?? '',
+                  type: a.contentType.type,
+                  content:
+                    typeof a.body == 'string'
+                      ? a.body
+                      : Buffer.from(a.body).toString('base64'),
                 })) ?? [],
-            });
+            };
+          } catch (e) {
+            console.trace(e);
           }
-
-          return {
-            data: result.reverse(),
-            meta: {
-              page,
-              total: mesagesTotal,
-              totalPages: pages,
-              perPage,
-            },
-          };
-        } catch (e) {
-          console.trace(e);
-        }
-      },
-      message: async (id: string) => {
-        try {
-          let searchResults = await this.connection.search({
-            uid: id,
-          });
-
-          if (!searchResults || searchResults.length < 1) {
-            searchResults = await this.connection.search({
-              header: { 'Message-ID': id },
+        },
+        addFlag: async (id: string, flag: string) => {
+          try {
+            const searchResults = await this.connection.search({
+              uid: id,
             });
+
+            await this.connection.messageFlagsAdd(searchResults[0].toString(), [
+              flag,
+            ]);
+
+            return {
+              id: searchResults[0].toString(),
+              flag,
+            };
+          } catch (e) {
+            console.trace(e);
           }
+        },
+        removeFlag: async (id: string, flag: string) => {
+          try {
+            const searchResults = await this.connection.search({
+              uid: id,
+            });
 
-          const msg = await this.connection.fetchOne(
-            searchResults[0].toString(),
-            {
-              envelope: true,
-              source: true,
-              flags: true,
-              headers: true,
-            },
-          );
+            await this.connection.messageFlagsRemove(
+              searchResults[0].toString(),
+              [flag],
+            );
 
-          const data = extract(msg.source.toString());
+            return {
+              id: searchResults[0].toString(),
+              flag,
+            };
+          } catch (e) {
+            console.trace(e);
+          }
+        },
+        move: async (id: string, destination: string) => {
+          try {
+            const searchResults = await this.connection.search({
+              uid: id,
+            });
 
-          const flags: string[] = [];
+            await this.connection.messageMove(
+              searchResults[0].toString(),
+              destination,
+            );
 
-          msg.flags.forEach((flag) => flags.push(flag));
-
-          const headers = Object.fromEntries(
-            msg.headers
-              .toString()
-              .split('\n')
-              .map((a) =>
-                a
-                  .trim()
-                  .split(': ')
-                  .map((b) => b.trim()),
-              ),
-          );
-
-          const preview = convert(data.html ?? data.text ?? '', {
-            selectors: [
-              {
-                selector: 'a',
-                format: 'skip',
-              },
-              {
-                selector: 'img',
-                format: 'skip',
-              },
-            ],
-          })
-            .replace(/[\n\r]/g, ' ')
-            .trim()
-            .substring(0, 120);
-
-          return {
-            id: msg.uid.toString() ?? '',
-            subject: data.subject ?? '',
-            sender: {
-              name: data.from?.name ?? '',
-              email: data.from?.address ?? '',
-            },
-            flags,
-            body: data.html ?? data.text ?? '',
-            preview: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
-            date: msg.envelope.date ?? new Date(0),
-            headers: headers,
-            files:
-              data.attachments?.map((a) => ({
-                name: a.filename,
-                id: a.contentId ?? '',
-                type: a.contentType.type,
-                content:
-                  typeof a.body == 'string'
-                    ? a.body
-                    : Buffer.from(a.body).toString('base64'),
-              })) ?? [],
-          };
-        } catch (e) {
-          console.trace(e);
-        }
-      },
-      addFlag: async (id: string, flag: string) => {
-        try {
-          const searchResults = await this.connection.search({
-            uid: id,
-          });
-
-          await this.connection.messageFlagsAdd(searchResults[0].toString(), [
-            flag,
-          ]);
-
-          return {
-            id: searchResults[0].toString(),
-            flag,
-          };
-        } catch (e) {
-          console.trace(e);
-        }
-      },
-      removeFlag: async (id: string, flag: string) => {
-        try {
-          const searchResults = await this.connection.search({
-            uid: id,
-          });
-
-          await this.connection.messageFlagsRemove(
-            searchResults[0].toString(),
-            [flag],
-          );
-
-          return {
-            id: searchResults[0].toString(),
-            flag,
-          };
-        } catch (e) {
-          console.trace(e);
-        }
-      },
-      move: async (id: string, destination: string) => {
-        try {
-          const searchResults = await this.connection.search({
-            uid: id,
-          });
-
-          await this.connection.messageMove(
-            searchResults[0].toString(),
-            destination,
-          );
-
-          return {
-            id: searchResults[0].toString(),
-          };
-        } catch (e) {
-          console.trace(e);
-        }
-      },
-    };
+            return {
+              id: searchResults[0].toString(),
+            };
+          } catch (e) {
+            console.trace(e);
+          }
+        },
+      };
+    } catch (e) {
+      console.trace(e);
+    }
   }
 
   static async connect(conf: {
