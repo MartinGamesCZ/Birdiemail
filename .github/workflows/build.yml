@@ -34,9 +34,9 @@ jobs:
           script: |
             source /root/.bashrc
             cd /var/lib/marti/birdie/prod/package/backend
-            bun install
-            bun run build
+            source /root/.bashrc && bun install
+            source /root/.bashrc && bun run build
             cd /var/lib/marti/birdie/prod/package/web
-            bun install
-            WEB_TRPC_URL=http://10.74.0.3:3000/trpc NEXT_PUBLIC_TRPC_URL=https://api.birdiemail.social/trpc bun run build
+            source /root/.bashrc && bun install
+            source /root/.bashrc && WEB_TRPC_URL=http://10.74.0.3:3000/trpc NEXT_PUBLIC_TRPC_URL=https://api.birdiemail.social/trpc bun run build
             docker compose -f /var/lib/marti/birdie/prod/compose.prod.yml restart web backend
