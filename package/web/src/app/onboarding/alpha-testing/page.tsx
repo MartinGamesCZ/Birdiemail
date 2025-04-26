@@ -217,10 +217,10 @@ export default function AlphaTestingPage() {
 
           <div className="text-center pb-20">
             <Link
-              href="/"
+              href="https://github.com/MartinGamesCZ/Birdiemail/releases/tag/0.1.0-alpha.1"
               className="inline-flex items-center px-8 py-4 border border-transparent text-lg font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              Continue to Birdiemail
+              Download app
             </Link>
           </div>
         </div>
