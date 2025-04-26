@@ -39,7 +39,7 @@ export class MailService {
       encryptionKey,
     );
 
-    const res = await (await connection!.mailbox(mailbox)).list(page);
+    const res = await (await connection!.mailbox(mailbox))!.list(page);
 
     if (!res) {
       const connection = await this.establishImapConnection(
@@ -49,7 +49,7 @@ export class MailService {
         true,
       );
 
-      return await (await connection!.mailbox(mailbox)).list(page);
+      return await (await connection!.mailbox(mailbox))!.list(page);
     }
 
     return res;
@@ -83,7 +83,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection!.mailbox(mailbox)).message(messageId);
+    return await (await connection!.mailbox(mailbox))!.message(messageId);
   }
 
   async addMailMessageFlag(
@@ -115,7 +115,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection!.mailbox(mailbox)).addFlag(messageId, flag);
+    return await (await connection!.mailbox(mailbox))!.addFlag(messageId, flag);
   }
 
   async removeMailMessageFlag(
@@ -147,9 +147,10 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (
-      await connection!.mailbox(mailbox)
-    ).removeFlag(messageId, flag);
+    return await (await connection!.mailbox(mailbox))!.removeFlag(
+      messageId,
+      flag,
+    );
   }
 
   async moveMessage(
@@ -181,9 +182,10 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (
-      await connection!.mailbox(mailbox)
-    ).move(messageId, destination);
+    return await (await connection!.mailbox(mailbox))!.move(
+      messageId,
+      destination,
+    );
   }
 
   async sendMessage(
@@ -280,10 +282,26 @@ export class MailService {
       encryptionKey,
     );
 
-    return (await connection!.mailboxList()).map((m) => ({
+    const res = (await connection!.mailboxList())!.map((m) => ({
       name: m.name,
       flags: [m.specialUse ?? ''],
     }));
+
+    if (!res) {
+      const connection = await this.establishImapConnection(
+        mailAccount.id,
+        mailAccount,
+        encryptionKey,
+        true,
+      );
+
+      return (await connection!.mailboxList())!.map((m) => ({
+        name: m.name,
+        flags: [m.specialUse ?? ''],
+      }));
+    }
+
+    return res;
   }
 
   private async establishImapConnection(
