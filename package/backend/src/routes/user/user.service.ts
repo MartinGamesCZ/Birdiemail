@@ -319,6 +319,12 @@ export class UserService {
     return OkResponse({});
   }
 
+  async userInfo(user: UserEntity) {
+    if (!user) return ErrorResponse('User not found');
+
+    return OkResponse(user);
+  }
+
   private async checkIfUserExists(email: string): Promise<boolean> {
     if (!isEmail(email)) return false;
 

@@ -72,7 +72,7 @@ export class Imap {
     } catch (e) {
       console.trace(e);
 
-      return [];
+      return null;
     }
   }
 
@@ -81,6 +81,8 @@ export class Imap {
 
     if (id.startsWith('@')) {
       const boxes = await this.mailboxList().catch();
+
+      if (!boxes) return null;
 
       id = boxes.find((a) => a.specialUse == `\\${id.slice(1)}`)?.path ?? '';
     }
