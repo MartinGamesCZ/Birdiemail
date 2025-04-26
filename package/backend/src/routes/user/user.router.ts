@@ -109,7 +109,9 @@ export class UserRouter {
     output: z.union([
       z.object({
         status: z.literal('ok'),
-        data: z.object({}),
+        data: z.object({
+          id: z.string(),
+        }),
       }),
       z.object({
         status: z.literal('error'),
