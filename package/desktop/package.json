@@ -2,13 +2,13 @@
   "name": "Birdiemail",
   "description": "Birdiemail Desktop",
   "author": {
-    "name": "Martin \"MartinGames\" Petr",
+    "name": "Martin MartinGames Petr",
     "email": "martin.petr@birdiemail.social"
   },
   "homepage": "https://www.birdiemail.social",
   "icon": "public/logo_appicon.png",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.1",
   "type": "module",
   "scripts": {
     "dev": "NODE_ENV=development vite",
