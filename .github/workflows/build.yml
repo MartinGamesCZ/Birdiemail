@@ -13,50 +13,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: SSH command
+      - name: Prepare and clone
         uses: appleboy/ssh-action@v0.1.0
         with:
-          host: "de1.servers.remardev.com"
+          host: "194.163.161.92"
           username: "root"
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
-            rm -rf /home/martin/birdie/package/web
-            rm -rf /home/martin/birdie/package/backend
+            rm -rf /var/lib/marti/birdie/prod || true
+            mkdir -p /var/lib/marti/birdie/prod
+            cd /var/lib/marti/birdie/prod
+            git clone --single-branch --branch ${{ github.head_ref || github.ref_name }} https://oauth2:${{ secrets.PAT }}@github.com/MartinGamesCZ/Birdiemail.git .
 
-      - name: SFTP uploader - Web
-        uses: wangyucode/sftp-upload-action@v2.0.4
-        with:
-          host: "de1.servers.remardev.com"
-          username: "root"
-          password: ${{ secrets.SSH_PASSWORD }}
-          localDir: "./package/web"
-          remoteDir: "/home/martin/birdie/package/web"
-          exclude: ".*,node_modules,bun.lockb,dist"
-          compress: true
-
-      - name: SFTP uploader - Backend
-        uses: wangyucode/sftp-upload-action@v2.0.4
-        with:
-          host: "de1.servers.remardev.com"
-          username: "root"
-          password: ${{ secrets.SSH_PASSWORD }}
-          localDir: "./package/backend"
-          remoteDir: "/home/martin/birdie/package/backend"
-          exclude: ".*,node_modules,bun.lockb,dist"
-          compress: true
-
-      - name: SSH command
+      - name: Build and restart
         uses: appleboy/ssh-action@v0.1.0
         with:
-          host: "de1.servers.remardev.com"
+          host: "194.163.161.92"
           username: "root"
           password: ${{ secrets.SSH_PASSWORD }}
           script: |
-            source //.bashrc
-            cd /home/martin/birdie/package/backend
+            source /root/.bashrc
+            cd /var/lib/marti/birdie/prod/package/backend
             bun install
             bun run build
-            cd /home/martin/birdie/package/web
+            cd /var/lib/marti/birdie/prod/package/web
             bun install
-            WEB_TRPC_URL=http://10.74.0.3:3000/trpc NEXT_PUBLIC_TRPC_URL=https://app.birdiemail.social/api/trpc bun run build
-            docker compose restart web backend
+            WEB_TRPC_URL=http://10.74.0.3:3000/trpc NEXT_PUBLIC_TRPC_URL=https://api.birdiemail.social/trpc bun run build
+            docker compose -f /var/lib/marti/birdie/prod/compose.prod.yml restart web backend

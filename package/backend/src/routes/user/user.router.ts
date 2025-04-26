@@ -177,4 +177,43 @@ export class UserRouter {
 
     return await this.userService.getMailAccounts(context.user);
   }
+
+  @Mutation({
+    input: z.object({
+      email: z.string(),
+    }),
+    output: z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ]),
+  })
+  async resetPassword(@Input() data: { email: string }) {
+    return await this.userService.resetPassword(data.email);
+  }
+
+  @Mutation({
+    input: z.object({
+      code: z.string(),
+      password: z.string(),
+    }),
+    output: z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ]),
+  })
+  async finishResetPassword(@Input() data: { code: string; password: string }) {
+    return await this.userService.finishResetPassword(data.code, data.password);
+  }
 }

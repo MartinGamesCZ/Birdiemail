@@ -1,0 +1,55 @@
+# Networking config:
+# - Gateway: 10.74.0.1
+# - Database: 10.74.0.2
+# - Backend: 10.74.0.3
+# - Web: 10.74.0.4
+
+services:
+  web:
+    tty: true
+    image: node:20
+    volumes:
+      - ./package:/app
+    working_dir: /app/web
+    command: ["npm", "run", "start"]
+    restart: always
+    env_file:
+      - ../.env
+    networks:
+      birdie:
+        ipv4_address: 10.74.0.4
+
+  backend:
+    tty: true
+    image: node:20
+    volumes:
+      - ./package:/app
+    working_dir: /app/backend
+    command: ["npm", "run", "start"]
+    restart: always
+    env_file:
+      - ../.env
+    networks:
+      birdie:
+        ipv4_address: 10.74.0.3
+
+  db:
+    tty: true
+    image: timescale/timescaledb-ha:pg17
+    volumes:
+      - ../pgdata:/home/postgres/pgdata/data
+    env_file:
+      - ../.env
+    user: root
+    restart: always
+    networks:
+      birdie:
+        ipv4_address: 10.74.0.2
+
+networks:
+  birdie:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.74.0.0/24
+          gateway: 10.74.0.1

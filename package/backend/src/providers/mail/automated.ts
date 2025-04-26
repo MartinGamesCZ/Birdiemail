@@ -5,6 +5,7 @@ import { Smtp } from './smtp';
 
 export enum AutomatedMailType {
   SignupVerification = 'signup-verification',
+  PasswordReset = 'password-reset',
 }
 
 export class AutomatedMail {
@@ -29,7 +30,10 @@ export class AutomatedMail {
       host: process.env.MAILACC_CMN_SMTP_HOST ?? '',
       port: process.env.MAILACC_CMN_SMTP_PORT ?? '587',
       secure: process.env.MAILACC_CMN_SMTP_SECURE === 'true',
-      user: process.env.MAILACC_NOREPLY_EMAIL ?? '',
+      user:
+        process.env.MAILACC_NOREPLY_USERNAME ??
+        process.env.MAILACC_NOREPLY_EMAIL ??
+        '',
       password: process.env.MAILACC_NOREPLY_PASSWORD ?? '',
     });
 

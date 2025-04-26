@@ -252,6 +252,73 @@ export class UserService {
     return mailAccounts;
   }
 
+  async resetPassword(email: string) {
+    if (!isEmail(email)) return ErrorResponse('Invalid email address');
+
+    const exists = await this.checkIfUserExists(email);
+    if (!exists)
+      return ErrorResponse(
+        'User with this email does not exist, try signing up',
+      );
+
+    const user = await Repo.user.findOne({
+      where: {
+        email: email,
+      },
+    });
+    if (!user) return ErrorResponse('User with this email does not exist');
+    if (!user.isVerified)
+      return ErrorResponse('Please verify your email first');
+
+    const resetMail = new AutomatedMail(AutomatedMailType.PasswordReset);
+
+    user.verificationCode = randomUUID().replace(/-/g, '');
+
+    const res = await Repo.user.save(user).catch((e) => ({
+      error: e.message,
+    }));
+    if ('error' in res) return ErrorResponse(res.error);
+
+    resetMail.insertPlaceholders({
+      name: user.name,
+      resetLink: `${process.env.NET_WEB_PUB}/auth/reset?code=${user.verificationCode}`,
+      currentYear: new Date().getFullYear().toString(),
+      termsUrl: `${process.env.NET_WEB_PUB}/terms`,
+      privacyPolicyUrl: `${process.env.NET_WEB_PUB}/privacy`,
+      logoUrl: `${PUBLIC_WEB_URL}/birdie_logo_text.png`,
+    });
+
+    await resetMail.send(email);
+
+    return OkResponse({});
+  }
+
+  async finishResetPassword(code: string, password: string) {
+    if (!code) return ErrorResponse('Invalid code');
+    if (!isStrongPassword(password))
+      return ErrorResponse('Password is not strong enough');
+
+    const user = await Repo.user.findOne({
+      where: {
+        verificationCode: code,
+      },
+    });
+    if (!user)
+      return ErrorResponse(
+        'Invalid verification code (maybe already verified?)',
+      );
+
+    user.password = hashSync(password, 12);
+    user.verificationCode = '-';
+
+    const res = await Repo.user.save(user).catch((e) => ({
+      error: e.message,
+    }));
+    if ('error' in res) return ErrorResponse(res.error);
+
+    return OkResponse({});
+  }
+
   private async checkIfUserExists(email: string): Promise<boolean> {
     if (!isEmail(email)) return false;
 

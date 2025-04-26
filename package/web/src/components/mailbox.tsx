@@ -9,6 +9,11 @@ import {
   StarIcon,
   DocumentTextIcon,
   PaperClipIcon,
+  ArrowTurnUpLeftIcon,
+  ArrowTurnUpRightIcon,
+  EnvelopeIcon,
+  TrashIcon,
+  EllipsisHorizontalIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { Avatar } from "./ui/avatar";
@@ -28,7 +33,7 @@ import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
 import { Pagination } from "./ui/pagination";
 import { cn } from "@/lib/utils";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "@/server/trpc";
 import { Spinner } from "./ui/spinner";
 import { MailFlag } from "@/types/MailFlag";
@@ -63,6 +68,10 @@ export default function Mailbox(props: {
   );
 
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>(
+    {}
+  );
 
   const handleAccountChange = (account: Account) => {
     setCurrentAccount(account);
@@ -76,6 +85,30 @@ export default function Mailbox(props: {
     url.searchParams.delete("messageId");
 
     router.push(url.toString());
+  };
+
+  const handleAction = async (
+    messageId: string,
+    actionId: string,
+    actionFn: () => Promise<any>
+  ) => {
+    if (loadingActions[`${messageId}-${actionId}`]) return;
+
+    setLoadingActions((prev) => ({
+      ...prev,
+      [`${messageId}-${actionId}`]: true,
+    }));
+
+    try {
+      await actionFn();
+    } catch (error) {
+      console.error(`Failed to execute ${actionId} action:`, error);
+    } finally {
+      setLoadingActions((prev) => ({
+        ...prev,
+        [`${messageId}-${actionId}`]: false,
+      }));
+    }
   };
 
   useEffect(() => {
@@ -162,11 +195,6 @@ export default function Mailbox(props: {
               return (
                 <div
                   key={i}
-                  onClick={() =>
-                    router.push(
-                      `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
-                    )
-                  }
                   className="cursor-pointer rounded-xl overflow-hidden flex-shrink-0"
                 >
                   <Card
@@ -221,6 +249,238 @@ export default function Mailbox(props: {
                               >
                                 {formatMailDate(message.date)}
                               </p>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 ml-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <EllipsisHorizontalIcon className="h-5 w-5 text-gray-500" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                  align="end"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleAction(
+                                        message.id,
+                                        "reply",
+                                        async () => {
+                                          router.push(
+                                            `/mail/compose?action=reply&src-msg-id=${message.id}&src-msg-mbox=${props.boxId}`
+                                          );
+                                        }
+                                      )
+                                    }
+                                    disabled={
+                                      loadingActions[`${message.id}-reply`]
+                                    }
+                                    className="flex items-center"
+                                  >
+                                    <ArrowTurnUpLeftIcon className="w-4 h-4 mr-2" />
+                                    {loadingActions[`${message.id}-reply`]
+                                      ? "Loading..."
+                                      : "Reply"}
+                                    {loadingActions[`${message.id}-reply`] && (
+                                      <Spinner
+                                        size="sm"
+                                        className="ml-2"
+                                        color="primary"
+                                      />
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleAction(
+                                        message.id,
+                                        "forward",
+                                        async () => {
+                                          router.push(
+                                            `/mail/compose?action=forward&src-msg-id=${message.id}&src-msg-mbox=${props.boxId}`
+                                          );
+                                        }
+                                      )
+                                    }
+                                    disabled={
+                                      loadingActions[`${message.id}-forward`]
+                                    }
+                                    className="flex items-center"
+                                  >
+                                    <ArrowTurnUpRightIcon className="w-4 h-4 mr-2" />
+                                    {loadingActions[`${message.id}-forward`]
+                                      ? "Loading..."
+                                      : "Forward"}
+                                    {loadingActions[
+                                      `${message.id}-forward`
+                                    ] && (
+                                      <Spinner
+                                        size="sm"
+                                        className="ml-2"
+                                        color="primary"
+                                      />
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleAction(
+                                        message.id,
+                                        "star",
+                                        async () => {
+                                          const willBeRemoved =
+                                            message.flags.includes(
+                                              MailFlag.Flagged
+                                            );
+
+                                          if (willBeRemoved)
+                                            await trpc.mailRouter.removeMailMessageFlag.mutate(
+                                              {
+                                                flag: MailFlag.Flagged,
+                                                messageId: message.id,
+                                                mailbox: props.boxId,
+                                                accountId: props.currentAccount,
+                                              }
+                                            );
+                                          else
+                                            await trpc.mailRouter.addMailMessageFlag.mutate(
+                                              {
+                                                flag: MailFlag.Flagged,
+                                                messageId: message.id,
+                                                mailbox: props.boxId,
+                                                accountId: props.currentAccount,
+                                              }
+                                            );
+
+                                          queryClient.refetchQueries({
+                                            queryKey: [
+                                              "mailbox",
+                                              props.currentAccount,
+                                              props.boxId,
+                                            ],
+                                          });
+                                        }
+                                      )
+                                    }
+                                    disabled={
+                                      loadingActions[`${message.id}-star`]
+                                    }
+                                    className="flex items-center"
+                                  >
+                                    {message.flags.includes(
+                                      MailFlag.Flagged
+                                    ) ? (
+                                      <StarIconSolid className="w-4 h-4 mr-2 text-blue-500" />
+                                    ) : (
+                                      <StarIcon className="w-4 h-4 mr-2" />
+                                    )}
+                                    {loadingActions[`${message.id}-star`]
+                                      ? "Loading..."
+                                      : message.flags.includes(MailFlag.Flagged)
+                                      ? "Unstar"
+                                      : "Star"}
+                                    {loadingActions[`${message.id}-star`] && (
+                                      <Spinner
+                                        size="sm"
+                                        className="ml-2"
+                                        color="primary"
+                                      />
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleAction(
+                                        message.id,
+                                        "mark-unread",
+                                        async () => {
+                                          await trpc.mailRouter.removeMailMessageFlag.mutate(
+                                            {
+                                              flag: MailFlag.Seen,
+                                              messageId: message.id,
+                                              mailbox: props.boxId,
+                                              accountId: props.currentAccount,
+                                            }
+                                          );
+
+                                          queryClient.refetchQueries({
+                                            queryKey: [
+                                              "mailbox",
+                                              props.currentAccount,
+                                              props.boxId,
+                                            ],
+                                          });
+                                        }
+                                      )
+                                    }
+                                    disabled={
+                                      loadingActions[
+                                        `${message.id}-mark-unread`
+                                      ]
+                                    }
+                                    className="flex items-center"
+                                  >
+                                    <EnvelopeIcon className="w-4 h-4 mr-2" />
+                                    {loadingActions[`${message.id}-mark-unread`]
+                                      ? "Loading..."
+                                      : "Mark as unread"}
+                                    {loadingActions[
+                                      `${message.id}-mark-unread`
+                                    ] && (
+                                      <Spinner
+                                        size="sm"
+                                        className="ml-2"
+                                        color="primary"
+                                      />
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleAction(
+                                        message.id,
+                                        "delete",
+                                        async () => {
+                                          await trpc.mailRouter.moveMailMessage.mutate(
+                                            {
+                                              destination: "[Gmail]/Koš",
+                                              messageId: message.id,
+                                              mailbox: props.boxId,
+                                              accountId: props.currentAccount,
+                                            }
+                                          );
+
+                                          queryClient.refetchQueries({
+                                            queryKey: [
+                                              "mailbox",
+                                              props.currentAccount,
+                                              props.boxId,
+                                            ],
+                                          });
+                                        }
+                                      )
+                                    }
+                                    disabled={
+                                      loadingActions[`${message.id}-delete`]
+                                    }
+                                    className="flex items-center text-red-500"
+                                  >
+                                    <TrashIcon className="w-4 h-4 mr-2" />
+                                    {loadingActions[`${message.id}-delete`]
+                                      ? "Deleting..."
+                                      : "Delete"}
+                                    {loadingActions[`${message.id}-delete`] && (
+                                      <Spinner
+                                        size="sm"
+                                        className="ml-2"
+                                        color="primary"
+                                      />
+                                    )}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
                           <h2
@@ -235,32 +495,41 @@ export default function Mailbox(props: {
                           </h2>
                         </div>
                       </div>
-                      <p
-                        className={cn(
-                          "line-clamp-2 overflow-hidden",
-                          message.flags.includes("\\Seen")
-                            ? "text-gray-700 dark:text-gray-300"
-                            : "text-gray-800 dark:text-gray-200"
-                        )}
+                      <div
+                        className="w-full"
+                        onClick={() =>
+                          router.push(
+                            `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
+                          )
+                        }
                       >
-                        {message.body.substring(0, 100)}...
-                      </p>
+                        <p
+                          className={cn(
+                            "line-clamp-2 overflow-hidden",
+                            message.flags.includes("\\Seen")
+                              ? "text-gray-700 dark:text-gray-300"
+                              : "text-gray-800 dark:text-gray-200"
+                          )}
+                        >
+                          {message.body.substring(0, 100)}...
+                        </p>
 
-                      {message.files && message.files.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
-                          {message.files.map((file, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center p-1.5 bg-gray-100 dark:bg-gray-800/60 rounded text-xs text-gray-700 dark:text-gray-300"
-                            >
-                              <PaperClipIcon className="h-3 w-3 text-gray-500 mr-1" />
-                              <span className="truncate max-w-[100px]">
-                                {file.name || `File ${idx + 1}`}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                        {message.files && message.files.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {message.files.map((file, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center p-1.5 bg-gray-100 dark:bg-gray-800/60 rounded text-xs text-gray-700 dark:text-gray-300"
+                              >
+                                <PaperClipIcon className="h-3 w-3 text-gray-500 mr-1" />
+                                <span className="truncate max-w-[100px]">
+                                  {file.name || `File ${idx + 1}`}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 </div>

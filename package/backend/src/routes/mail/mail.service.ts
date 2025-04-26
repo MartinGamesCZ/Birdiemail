@@ -39,7 +39,20 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection.mailbox(mailbox)).list(page);
+    const res = await (await connection!.mailbox(mailbox)).list(page);
+
+    if (!res) {
+      const connection = await this.establishImapConnection(
+        mailAccount.id,
+        mailAccount,
+        encryptionKey,
+        true,
+      );
+
+      return await (await connection!.mailbox(mailbox)).list(page);
+    }
+
+    return res;
   }
 
   async getMailMessage(
@@ -70,7 +83,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection.mailbox(mailbox)).message(messageId);
+    return await (await connection!.mailbox(mailbox)).message(messageId);
   }
 
   async addMailMessageFlag(
@@ -102,7 +115,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return await (await connection.mailbox(mailbox)).addFlag(messageId, flag);
+    return await (await connection!.mailbox(mailbox)).addFlag(messageId, flag);
   }
 
   async removeMailMessageFlag(
@@ -135,7 +148,7 @@ export class MailService {
     );
 
     return await (
-      await connection.mailbox(mailbox)
+      await connection!.mailbox(mailbox)
     ).removeFlag(messageId, flag);
   }
 
@@ -169,7 +182,7 @@ export class MailService {
     );
 
     return await (
-      await connection.mailbox(mailbox)
+      await connection!.mailbox(mailbox)
     ).move(messageId, destination);
   }
 
@@ -267,7 +280,7 @@ export class MailService {
       encryptionKey,
     );
 
-    return (await connection.mailboxList()).map((m) => ({
+    return (await connection!.mailboxList()).map((m) => ({
       name: m.name,
       flags: [m.specialUse ?? ''],
     }));
@@ -277,23 +290,26 @@ export class MailService {
     id: string,
     mailAccount: MailAccountEntity,
     encryptionKey: string,
+    forceReconnect: boolean = false,
   ) {
-    let connection = this.imapConnections.get(id);
+    try {
+      let connection = this.imapConnections.get(id);
 
-    if (!connection)
-      connection = await Imap.connect({
-        host: mailAccount.mailServer.imapAddress,
-        port: mailAccount.mailServer.imapPort,
-        user: mailAccount.email,
-        password: decryptMailPassword(encryptionKey, mailAccount.password),
-        secure: mailAccount.mailServer.imapSecure,
-      });
+      if (!connection || forceReconnect)
+        connection = await Imap.connect({
+          host: mailAccount.mailServer.imapAddress,
+          port: mailAccount.mailServer.imapPort,
+          user: mailAccount.email,
+          password: decryptMailPassword(encryptionKey, mailAccount.password),
+          secure: mailAccount.mailServer.imapSecure,
+        });
 
-    if (!connection.isConnected()) await connection.connect();
+      if (!connection || !connection.isConnected()) await connection!.connect();
 
-    this.imapConnections.set(id, connection);
+      this.imapConnections.set(id, connection!);
 
-    return connection;
+      return connection;
+    } catch (e) {}
   }
 
   private async establishSmtpConnection(

@@ -95,7 +95,32 @@ const appRouter = t.router({
         createdAt: z.date(),
         updatedAt: z.date(),
       }),
-    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    resetPassword: publicProcedure.input(z.object({
+      email: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    finishResetPassword: publicProcedure.input(z.object({
+      code: z.string(),
+      password: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({
     getMail: publicProcedure.input(z.object({

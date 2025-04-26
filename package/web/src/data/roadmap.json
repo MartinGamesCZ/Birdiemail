@@ -74,11 +74,11 @@
       },
       {
         "name": "Command centre // Add actions",
-        "done": false
+        "done": true
       },
       {
         "name": "Internal // Admin panel",
-        "done": false
+        "done": true
       }
     ]
   }
