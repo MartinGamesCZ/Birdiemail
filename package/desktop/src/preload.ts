@@ -26,3 +26,4 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 });
 
 contextBridge.exposeInMainWorld("appIsElectron", true);
+contextBridge.exposeInMainWorld("appVersion", process.env.APP_VERSION);

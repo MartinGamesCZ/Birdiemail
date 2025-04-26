@@ -120,7 +120,23 @@ const appRouter = t.router({
         status: z.literal('error'),
         message: z.string(),
       }),
-    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    userInfo: publicProcedure.output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({
+          id: z.string(),
+          email: z.string(),
+          name: z.string(),
+          createdAt: z.date(),
+          updatedAt: z.date(),
+        }),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({
     getMail: publicProcedure.input(z.object({

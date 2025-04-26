@@ -16,10 +16,13 @@ import { IS_DEV } from "@/config";
 import { useQuery } from "@tanstack/react-query";
 import { trpc } from "@/server/trpc";
 import Cookies from "js-cookie";
+import { SlashCommands } from "@/commands";
+import { toast } from "react-toastify";
 
 interface CommandCenterProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  onCommand?: (command: string) => void;
 }
 
 type CommandType = "navigation" | "action" | "mail" | "settings";
@@ -34,7 +37,11 @@ interface Command {
   action: () => void;
 }
 
-export function CommandCenter({ isOpen, setIsOpen }: CommandCenterProps) {
+export function CommandCenter({
+  isOpen,
+  setIsOpen,
+  onCommand,
+}: CommandCenterProps) {
   const [query, setQuery] = useState("");
   const router = useRouter();
 
@@ -62,7 +69,34 @@ export function CommandCenter({ isOpen, setIsOpen }: CommandCenterProps) {
 
   console.log(mailboxes);
 
+  const isSlashCommand = query.startsWith("/") && query.length > 1;
+
   const commands: Command[] = [
+    ...(isSlashCommand
+      ? [
+          {
+            id: "run-slash-command",
+            name: `Run command "${query}"`,
+            description: "Execute this command",
+            type: "action",
+            action: () => {
+              const command = query.slice(1).trim();
+              const slashCommand = SlashCommands.find(
+                (c) => c.name === command.split(" ")[0]
+              );
+
+              if (slashCommand) {
+                slashCommand.exec();
+              } else {
+                toast.error(`Command "${command.split(" ")[0]}" not found`);
+              }
+
+              setIsOpen(false);
+              setQuery("");
+            },
+          } as Command,
+        ]
+      : []),
     ...(IS_DEV
       ? ([
           {

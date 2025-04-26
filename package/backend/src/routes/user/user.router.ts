@@ -216,4 +216,29 @@ export class UserRouter {
   async finishResetPassword(@Input() data: { code: string; password: string }) {
     return await this.userService.finishResetPassword(data.code, data.password);
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Query({
+    output: z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({
+          id: z.string(),
+          email: z.string(),
+          name: z.string(),
+          createdAt: z.date(),
+          updatedAt: z.date(),
+        }),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ]),
+  })
+  async userInfo(@Ctx() context: any) {
+    if (!context.authorized) return ErrorResponse('Unauthorized');
+
+    return await this.userService.userInfo(context.user);
+  }
 }
