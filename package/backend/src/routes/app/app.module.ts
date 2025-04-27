@@ -10,6 +10,8 @@ import { AdminModule } from '../admin/admin.module';
 
 @Module({
   imports: [
+    // Initialize TRPC module with auto schema generation
+    // Uses app context
     TRPCModule.forRoot({
       autoSchemaFile: '../web/src/server/schema',
       context: AppContext,

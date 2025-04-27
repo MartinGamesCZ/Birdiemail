@@ -12,10 +12,13 @@ import { UserService } from './user.service';
 import { AuthMiddleware } from '../auth.middleware';
 import { ErrorResponse } from 'src/utils/response';
 
+// Router for handling user-related functionality
 @Router()
 export class UserRouter {
   constructor(private readonly userService: UserService) {}
 
+  // Route to check if the user is logged in
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Query({
     output: z.object({
@@ -23,11 +26,14 @@ export class UserRouter {
     }),
   })
   async isLoggedIn(@Ctx() context: any) {
+    // Check if the user is authenticated
     if (context.authorized) return { loggedIn: true };
 
+    // If not authenticated, return false
     return { loggedIn: false };
   }
 
+  // Route to sign up a new user
   @Mutation({
     input: z.object({
       email: z.string(),
@@ -48,9 +54,11 @@ export class UserRouter {
   async signup(
     @Input() data: { email: string; password: string; name: string },
   ) {
+    // Use the user service to handle the signup process
     return await this.userService.signup(data.email, data.password, data.name);
   }
 
+  // Route to verify the user's email
   @Mutation({
     input: z.object({
       key: z.string(),
@@ -67,9 +75,11 @@ export class UserRouter {
     ]),
   })
   async verify(@Input() data: { key: string }) {
+    // Use the user service to handle the email verification process
     return await this.userService.verify(data.key);
   }
 
+  // Route to sign in an existing user
   @Query({
     input: z.object({
       email: z.string(),
@@ -90,9 +100,12 @@ export class UserRouter {
     ]),
   })
   async signin(@Input() data: { email: string; password: string }) {
+    // Use the user service to handle the sign-in process
     return await this.userService.signin(data.email, data.password);
   }
 
+  // Route to add a new mail account for the user
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Mutation({
     input: z.object({
@@ -134,8 +147,10 @@ export class UserRouter {
     },
     @Ctx() context: any,
   ) {
+    // Check if the user is authenticated
     if (!context.authorized) return ErrorResponse('Unauthorized');
 
+    // Use the user service to handle the addition of the mail account
     return await this.userService.addMailAccount(
       data.name,
       data.email,
@@ -151,6 +166,8 @@ export class UserRouter {
     );
   }
 
+  // Route to get all mail accounts for the user
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Query({
     output: z.array(
@@ -175,11 +192,14 @@ export class UserRouter {
     ),
   })
   async getMailAccounts(@Ctx() context: any) {
+    // Return an error if the user is not authenticated
     if (!context.authorized) return ErrorResponse('Unauthorized');
 
+    // Use the user service to get the mail accounts for the authenticated user
     return await this.userService.getMailAccounts(context.user);
   }
 
+  // Route to request a password reset for the user
   @Mutation({
     input: z.object({
       email: z.string(),
@@ -196,9 +216,11 @@ export class UserRouter {
     ]),
   })
   async resetPassword(@Input() data: { email: string }) {
+    // Use the user service to handle the password reset process
     return await this.userService.resetPassword(data.email);
   }
 
+  // Route to finish the password reset process
   @Mutation({
     input: z.object({
       code: z.string(),
@@ -216,9 +238,12 @@ export class UserRouter {
     ]),
   })
   async finishResetPassword(@Input() data: { code: string; password: string }) {
+    // Use the user service to handle the finalization of the password reset
     return await this.userService.finishResetPassword(data.code, data.password);
   }
 
+  // Route to get the user's information
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Query({
     output: z.union([
@@ -239,8 +264,10 @@ export class UserRouter {
     ]),
   })
   async userInfo(@Ctx() context: any) {
+    // Check if the user is authenticated
     if (!context.authorized) return ErrorResponse('Unauthorized');
 
+    // Use the user service to get the user's information
     return await this.userService.userInfo(context.user);
   }
 }

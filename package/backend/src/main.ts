@@ -2,18 +2,22 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './routes/app/app.module';
 import { Db } from './db/_index';
 import { json } from 'express';
-import { AutomatedMail, AutomatedMailType } from './providers/mail/automated';
-import { PUBLIC_WEB_URL } from './config';
 
+// Main entry point for the application
 async function bootstrap() {
+  // Initialize the database connection and ORM
   await Db.initialize();
 
+  // Create the main application module
   const app = await NestFactory.create(AppModule);
 
-  app.use(json({ limit: '500mb' }));
+  // Configure the application
+  app.use(json({ limit: '500mb' })); // Limit the request body size to 500mb
+  app.enableCors('*'); // Enable CORS for all origins
 
-  app.enableCors('*');
-
+  // Start the application
   await app.listen(process.env.PORT ?? 3000);
 }
+
+// Start the application
 bootstrap();

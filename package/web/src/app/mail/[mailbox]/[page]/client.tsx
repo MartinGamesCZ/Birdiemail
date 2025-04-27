@@ -15,6 +15,7 @@ import {
   ArrowTurnLeftUpIcon,
   ArrowTurnUpLeftIcon,
   ArrowTurnUpRightIcon,
+  CodeBracketIcon,
   DocumentTextIcon,
   EnvelopeIcon,
   ExclamationTriangleIcon,
@@ -202,6 +203,19 @@ function MailToolbar(props: {
         loadingActions.delete ? "opacity-70 cursor-not-allowed" : ""
       }`,
       disabled: loadingActions.delete,
+    },
+    {
+      id: "raw",
+      icon: CodeBracketIcon,
+      label: loadingActions.raw ? "Loading..." : "View raw",
+      onClick: () =>
+        handleAction("raw", async () => {
+          window.open(
+            `/mail/raw?accountId=${props.accountId}&mailbox=${props.mailbox}&messageId=${props.messageId}`,
+            "_blank"
+          );
+        }),
+      disabled: loadingActions.raw,
     },
   ];
 

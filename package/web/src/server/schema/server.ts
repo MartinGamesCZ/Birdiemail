@@ -5,11 +5,7 @@ const t = initTRPC.create();
 const publicProcedure = t.procedure;
 
 const appRouter = t.router({
-  appRouter: t.router({
-    hello: publicProcedure.output(z.object({
-      hello: z.string(),
-    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
-  }),
+  appRouter: t.router({}),
   userRouter: t.router({
     isLoggedIn: publicProcedure.output(z.object({
       loggedIn: z.boolean(),
@@ -196,6 +192,11 @@ const appRouter = t.router({
         }),
       ),
     })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    getRawMailMessage: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    })).output(z.string()).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
     addMailMessageFlag: publicProcedure.input(z.object({
       accountId: z.string(),
       mailbox: z.string(),

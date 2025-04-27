@@ -3,6 +3,7 @@ import { renderTrpcPanel } from 'trpc-panel';
 import { AnyRouter } from '@trpc/server';
 import { AppRouterHost } from 'nestjs-trpc';
 
+// Controller for development tools (e.g., tRPC panel)
 @Controller()
 export class DevController implements OnModuleInit {
   private appRouter!: AnyRouter;
@@ -15,6 +16,7 @@ export class DevController implements OnModuleInit {
     this.appRouter = this.appRouterHost.appRouter;
   }
 
+  // TRPC panel route handler
   @All('/dev/trpc')
   panel(): string {
     return renderTrpcPanel(this.appRouter, {

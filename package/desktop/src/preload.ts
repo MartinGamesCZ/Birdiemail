@@ -1,6 +1,6 @@
 import { ipcRenderer, contextBridge } from "electron";
 
-// --------- Expose some API to the Renderer process ---------
+// Expose ipcRenderer to the renderer process
 contextBridge.exposeInMainWorld("ipcRenderer", {
   on(...args: Parameters<typeof ipcRenderer.on>) {
     const [channel, listener] = args;
@@ -20,10 +20,8 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
     const [channel, ...omit] = args;
     return ipcRenderer.invoke(channel, ...omit);
   },
-
-  // You can expose other APTs you need here.
-  // ...
 });
 
+// Export app metadata to the renderer process
 contextBridge.exposeInMainWorld("appIsElectron", true);
 contextBridge.exposeInMainWorld("appVersion", process.env.APP_VERSION);
