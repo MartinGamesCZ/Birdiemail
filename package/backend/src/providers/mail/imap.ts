@@ -119,7 +119,7 @@ export class Imap {
                 },
               };
 
-            const mesagesTotal = mbox!.exists;
+            const mesagesTotal = (mbox as any)?.exists;
             const perPage = 20;
             const pages = Math.ceil(mesagesTotal / perPage);
             const startMessage = Math.max(mbox.exists - perPage * page + 1, 1);

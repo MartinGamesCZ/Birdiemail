@@ -52,7 +52,11 @@ export default function Mailbox(props: {
   messageId: string;
   currentAccount: string;
 }) {
-  const { data: messages, isLoading } = useQuery({
+  const {
+    data: messages,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ["mailbox", props.currentAccount, props.boxId, props.page],
     queryFn: async () =>
       await trpc.mailRouter.getMail.query({
@@ -183,7 +187,10 @@ export default function Mailbox(props: {
         <div className="flex gap-2">
           <Button variant="ghost" size="icon">
             <ArrowPathIcon
-              className="w-5 h-5 text-gray-500"
+              className={cn(
+                "w-5 h-5 text-gray-500",
+                isFetching && "animate-spin"
+              )}
               onClick={handleRefresh}
             />
           </Button>
@@ -221,6 +228,11 @@ export default function Mailbox(props: {
                         : "border border-gray-200 hover:border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 shadow-sm"
                     )}
                     noBorderStyling
+                    onClick={() =>
+                      router.push(
+                        `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
+                      )
+                    }
                   >
                     {!message.flags.includes("\\Seen") && (
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-600 dark:bg-blue-500"></div>
@@ -509,14 +521,7 @@ export default function Mailbox(props: {
                           </h2>
                         </div>
                       </div>
-                      <div
-                        className="w-full"
-                        onClick={() =>
-                          router.push(
-                            `/mail/${props.boxId}/${props.page}?messageId=${message.id}`
-                          )
-                        }
-                      >
+                      <div className="w-full">
                         <p
                           className={cn(
                             "line-clamp-2 overflow-hidden",
