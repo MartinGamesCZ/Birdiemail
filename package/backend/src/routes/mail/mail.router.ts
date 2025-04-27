@@ -12,6 +12,7 @@ import { AuthMiddleware } from '../auth.middleware';
 import { Inject } from '@nestjs/common';
 import { MailService } from './mail.service';
 
+// Router for handling mail-related functionality
 @Router()
 export class MailRouter {
   constructor(
@@ -19,6 +20,8 @@ export class MailRouter {
     private readonly mailService: MailService,
   ) {}
 
+  // Route to get a list of emails in a mailbox
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Query({
     input: z.object({
@@ -57,6 +60,7 @@ export class MailRouter {
     @Ctx() context: any,
     @Input() data: { accountId: string; page: number; mailbox: string },
   ) {
+    // Use the mail service to get the list of emails
     return await this.mailService.getMail(
       context.user,
       context.encryptionKey,
@@ -66,6 +70,8 @@ export class MailRouter {
     );
   }
 
+  // Route to get a specific email message
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Query({
     input: z.object({
@@ -99,6 +105,7 @@ export class MailRouter {
     @Ctx() context: any,
     @Input() data: { accountId: string; mailbox: string; messageId: string },
   ) {
+    // Use the mail service to get the specific email message
     const res = await this.mailService.getMailMessage(
       context.user,
       context.encryptionKey,
@@ -107,9 +114,11 @@ export class MailRouter {
       data.messageId,
     );
 
+    // Return the result
     return res;
   }
 
+  // Route to get the raw content of a specific email message
   @UseMiddlewares(AuthMiddleware)
   @Query({
     input: z.object({
@@ -128,6 +137,7 @@ export class MailRouter {
       messageId: string;
     },
   ) {
+    // Use the mail service to get the raw content of the email message
     return await this.mailService.getRawMailMessage(
       context.user,
       context.encryptionKey,
@@ -137,6 +147,8 @@ export class MailRouter {
     );
   }
 
+  // Route to delete a specific email message
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Mutation({
     input: z.object({
@@ -160,6 +172,7 @@ export class MailRouter {
       flag: string;
     },
   ) {
+    // Use the mail service to add a flag to the email message
     return await this.mailService.addMailMessageFlag(
       context.user,
       context.encryptionKey,
@@ -170,6 +183,8 @@ export class MailRouter {
     );
   }
 
+  // Route to remove a flag from a specific email message
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Mutation({
     input: z.object({
@@ -193,6 +208,7 @@ export class MailRouter {
       flag: string;
     },
   ) {
+    // Use the mail service to remove a flag from the email message
     return await this.mailService.removeMailMessageFlag(
       context.user,
       context.encryptionKey,
@@ -203,6 +219,8 @@ export class MailRouter {
     );
   }
 
+  // Route to move a specific email message to another mailbox
+  // Uses authentication middleware
   @UseMiddlewares(AuthMiddleware)
   @Mutation({
     input: z.object({
@@ -225,6 +243,7 @@ export class MailRouter {
       destination: string;
     },
   ) {
+    // Use the mail service to move the email message to another mailbox
     return await this.mailService.moveMessage(
       context.user,
       context.encryptionKey,
@@ -235,6 +254,7 @@ export class MailRouter {
     );
   }
 
+  // Route to send an email message
   @UseMiddlewares(AuthMiddleware)
   @Mutation({
     input: z.object({
@@ -274,6 +294,7 @@ export class MailRouter {
       };
     },
   ) {
+    // Use the mail service to send the email message
     return await this.mailService.sendMessage(
       context.user,
       context.encryptionKey,
@@ -282,6 +303,7 @@ export class MailRouter {
     );
   }
 
+  // Route to get a list of mailboxes for a specific account
   @UseMiddlewares(AuthMiddleware)
   @Query({
     input: z.object({
@@ -298,6 +320,7 @@ export class MailRouter {
     @Ctx() context: any,
     @Input() data: { accountId: string },
   ) {
+    // Use the mail service to get the list of mailboxes
     return await this.mailService.getMailboxes(
       context.user,
       context.encryptionKey,

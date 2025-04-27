@@ -4,10 +4,11 @@ import { randomUUID } from 'crypto';
 import { IS_DEV, PUBLIC_WEB_URL } from 'src/config';
 import { Repo } from 'src/db/_index';
 import { UserEntity } from 'src/db/user.entity';
-import { AutomatedMail, AutomatedMailType } from 'src/providers/mail/automated';
+import { AutomatedMail } from 'src/providers/mail/automated';
 import { Imap } from 'src/providers/mail/imap';
 import { Smtp } from 'src/providers/mail/smtp';
 import { sendDiscordWebhook } from 'src/providers/webhook/discord';
+import { AutomatedMailType } from 'src/types/mail/automated';
 import { Response } from 'src/types/response/_index';
 import { getCurrentYear } from 'src/utils/datetime';
 import {
@@ -235,11 +236,14 @@ export class UserService {
       secure: imap_secure,
       user: email,
       password: password,
+      accountId: '@connection_test' + randomUUID(),
     }).catch((e) => '@err');
 
     // Return error if the IMAP connection failed (probably invalid credentials)
-    if (typeof imap == 'string' && imap == '@err')
+    if (typeof imap == 'string')
       return ErrorResponse('Invalid IMAP credentials');
+
+    await imap.disconnect();
 
     // Try to connect to the SMTP server with the provided credentials
     // to check if they are valid
