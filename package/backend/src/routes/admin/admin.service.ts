@@ -9,6 +9,11 @@ import { Permission } from 'src/types/user/permission';
 export class AdminService {
   // Function to check if the user is authorized to access admin features
   async checkIfAuthorized(user: UserEntity) {
+    // Return if no user is provided
+    if (!user) {
+      return false;
+    }
+
     // Check the user's permissions
     return await hasPermission(
       user.id,
