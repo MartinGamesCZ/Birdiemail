@@ -70,6 +70,12 @@ export class Smtp {
     });
   }
 
+  async isAuthenticated() {
+    const res = await this.connection.verify().catch(() => false);
+
+    return res;
+  }
+
   static async connect(conf: {
     host: string;
     port: string;

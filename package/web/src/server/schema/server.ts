@@ -5,11 +5,7 @@ const t = initTRPC.create();
 const publicProcedure = t.procedure;
 
 const appRouter = t.router({
-  appRouter: t.router({
-    hello: publicProcedure.output(z.object({
-      hello: z.string(),
-    })).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
-  }),
+  appRouter: t.router({}),
   userRouter: t.router({
     isLoggedIn: publicProcedure.output(z.object({
       loggedIn: z.boolean(),
