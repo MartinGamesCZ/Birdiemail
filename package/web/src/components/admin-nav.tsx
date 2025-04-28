@@ -2,10 +2,6 @@
 
 import {
   ChartPieIcon,
-  CogIcon,
-  EnvelopeIcon,
-  ShieldCheckIcon,
-  UserGroupIcon,
   UsersIcon,
   ChevronDownIcon,
   ArrowRightOnRectangleIcon,
@@ -15,6 +11,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+// Admin links definition
 const AdminLinks = [
   {
     type: "section",
@@ -34,8 +31,10 @@ const AdminLinks = [
   },
 ];
 
+// Admin navigation component
 export function AdminNav() {
   const pathname = usePathname();
+
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   return (

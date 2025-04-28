@@ -17,65 +17,60 @@ import { IS_DEV } from "@/config";
 import { useRouter } from "next/navigation";
 import { CommandCenter } from "@/components/command-center";
 
+// Declare ipcRenderer for Electron
 declare const ipcRenderer: any;
 
+// Titlebar properties interface
 interface TitlebarProps {
   title?: string;
-  showWindowControls?: boolean;
 }
 
-export const Titlebar = ({
-  title = "Birdiemail",
-  showWindowControls = true,
-}: TitlebarProps) => {
+// Titlebar component for the desktop app
+export function Titlebar({ title = "Birdiemail" }: TitlebarProps) {
   const [isMaximized, setIsMaximized] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
 
   useEffect(() => {
-    const currentTheme = localStorage.getItem("theme");
-    setIsDarkMode(currentTheme === "dark");
-
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Bind Ctrl+K to open the command center
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setIsCommandCenterOpen(true);
       }
     };
 
+    // Add event listener for keydown events
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+
+    // Cleanup event listener on component unmount
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
+  // Handle minimize button click
   const handleMinimize = () => {
-    if (typeof ipcRenderer !== "undefined") {
+    if (typeof ipcRenderer !== "undefined")
+      // Send minimize event to the main process
       ipcRenderer.send("win.minimize");
-    }
   };
 
+  // Handle maximize/restore button click
   const handleMaximizeRestore = () => {
     if (typeof ipcRenderer !== "undefined") {
-      if (isMaximized) {
-        ipcRenderer.send("win.restore");
-      } else {
-        ipcRenderer.send("win.maximize");
-      }
+      // Send maximize/restore event to the main process
+      if (isMaximized) ipcRenderer.send("win.restore");
+      else ipcRenderer.send("win.maximize");
+
       setIsMaximized((prev) => !prev);
     }
   };
 
+  // Handle close button click
   const handleClose = () => {
-    if (typeof ipcRenderer !== "undefined") {
-      ipcRenderer.send("win.close");
-    }
+    // Send close event to the main process
+    if (typeof ipcRenderer !== "undefined") ipcRenderer.send("win.close");
   };
-
-  const handleThemeToggle = () => {
-    toggleTheme();
-    setIsDarkMode((prev) => !prev);
-  };
-
-  const router = useRouter();
 
   return (
     <>
@@ -98,67 +93,42 @@ export const Titlebar = ({
         </div>
 
         <div className="flex items-center justify-end w-1/4">
-          {IS_DEV && (
+          <DevToolsButton />
+          <ThemeToggleButton />
+
+          <div className="flex px-3">
             <Button
               variant="ghost"
               size="icon-sm"
-              className="rounded-none h-10 w-10"
-              onClick={() => {
-                router.push("/dev");
-              }}
-              title="Toggle DevTools"
+              className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
+              onClick={handleMinimize}
+              title="Minimize"
             >
-              <WrenchIcon className="h-5 w-5" />
+              <MinusIcon className="h-5 w-5" />
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="rounded-none h-10 w-10"
-            onClick={handleThemeToggle}
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          >
-            {isDarkMode ? (
-              <SunIcon className="h-5 w-5" />
-            ) : (
-              <MoonIcon className="h-5 w-5" />
-            )}
-          </Button>
-          {showWindowControls && (
-            <div className="flex px-3">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
-                onClick={handleMinimize}
-                title="Minimize"
-              >
-                <MinusIcon className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
-                onClick={handleMaximizeRestore}
-                title={isMaximized ? "Restore" : "Maximize"}
-              >
-                {isMaximized ? (
-                  <ArrowsPointingInIcon className="h-5 w-5" />
-                ) : (
-                  <ArrowsPointingOutIcon className="h-5 w-5" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                className="rounded-none hover:bg-red-500 hover:text-white h-10 w-10"
-                onClick={handleClose}
-                title="Close"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </Button>
-            </div>
-          )}
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
+              onClick={handleMaximizeRestore}
+              title={isMaximized ? "Restore" : "Maximize"}
+            >
+              {isMaximized ? (
+                <ArrowsPointingInIcon className="h-5 w-5" />
+              ) : (
+                <ArrowsPointingOutIcon className="h-5 w-5" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="rounded-none hover:bg-red-500 hover:text-white h-10 w-10"
+              onClick={handleClose}
+              title="Close"
+            >
+              <XMarkIcon className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -168,4 +138,59 @@ export const Titlebar = ({
       />
     </>
   );
-};
+}
+
+function DevToolsButton() {
+  // Use next router for navigation
+  const router = useRouter();
+
+  // Don't show the button in production
+  if (!IS_DEV) return null;
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="rounded-none h-10 w-10"
+      onClick={() => {
+        router.push("/dev");
+      }}
+      title="Toggle DevTools"
+    >
+      <WrenchIcon className="h-5 w-5" />
+    </Button>
+  );
+}
+
+function ThemeToggleButton() {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Handle theme toggle button click
+  const handleThemeToggle = () => {
+    // Toggle the theme and update the state
+    toggleTheme();
+    setIsDarkMode((prev) => !prev);
+  };
+
+  useEffect(() => {
+    // Check if darkmode is enabled
+    const currentTheme = localStorage.getItem("theme");
+    setIsDarkMode(currentTheme === "dark");
+  }, []);
+
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className="rounded-none h-10 w-10"
+      onClick={handleThemeToggle}
+      title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+    >
+      {isDarkMode ? (
+        <SunIcon className="h-5 w-5" />
+      ) : (
+        <MoonIcon className="h-5 w-5" />
+      )}
+    </Button>
+  );
+}

@@ -1,7 +1,9 @@
 import { trpc } from "@/server/trpc";
 import { checkAppIsDesktop, getAppVersion } from "../desktop/app";
 
+// Function to obtain debug information
 export async function getDebugInfo() {
+  // Get user information from the server
   const user = await trpc.userRouter.userInfo.query();
 
   const debugInfo = {
@@ -29,9 +31,11 @@ export async function getDebugInfo() {
     },
   };
 
+  // Return debug information
   return debugInfo;
 }
 
+// Function to stringify debug information
 export function stringifyDebugInfo(
   data: {
     [key: string]: any;
@@ -40,13 +44,18 @@ export function stringifyDebugInfo(
 ): string {
   let out = "";
 
+  // Iterate over each key-value pair in the data object
   for (const [key, value] of Object.entries(data)) {
+    // Add indentation for nested objects
     out += " ".repeat(indent) + key + ": ";
 
+    // If the value is an object, recursively stringify it
     if (typeof value === "object" && value != null)
       out += "\n" + stringifyDebugInfo(value, indent + 2);
+    // If the value is a string / number, add it directly
     else out += value;
 
+    // Add a newline after each key-value pair
     out += "\n";
   }
 
