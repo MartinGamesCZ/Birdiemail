@@ -8,13 +8,13 @@ import {
   StarIcon,
   TrashIcon,
   UserIcon,
+  UserPlusIcon,
 } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useState } from "react";
 import { Card } from "./ui/card";
 import { Mailbox } from "@/types/Mailbox";
 
-// Link definition
 const Links = [
   {
     type: "section",
@@ -88,7 +88,6 @@ const Links = [
   },
 ];
 
-// Dock component
 export function Dock(props: { active: string }) {
   const location = {
     pathname: props.active,

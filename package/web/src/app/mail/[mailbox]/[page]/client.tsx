@@ -334,6 +334,12 @@ export function MailMessage(props: {
       });
   }, [data]);
 
+  const handleAttachmentOpen = async (attachmentId: string) => {
+    window.open(
+      `/mail/attachment?boxId=${props.mailbox}&messageId=${props.messageId}&attachmentId=${attachmentId}`
+    );
+  };
+
   let body =
     data?.body.split("---------- Forwarded message ---------")?.[0] ?? "";
 
@@ -387,7 +393,10 @@ export function MailMessage(props: {
             {data.files.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center p-2 bg-gray-100 dark:bg-gray-800 rounded-md max-w-full"
+                className="flex items-center p-2 bg-gray-100 dark:bg-gray-800 rounded-md max-w-full cursor-pointer"
+                onClick={() => {
+                  handleAttachmentOpen(file.id);
+                }}
               >
                 <DocumentTextIcon className="h-5 w-5 text-gray-500 mr-2 flex-shrink-0" />
                 <span className="text-sm truncate max-w-[200px]">
@@ -400,7 +409,9 @@ export function MailMessage(props: {
                   variant="ghost"
                   size="sm"
                   className="ml-2"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
+
                     const blob = new Blob(
                       [Buffer.from(file.content, "base64")],
                       {
