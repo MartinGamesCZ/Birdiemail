@@ -8,6 +8,7 @@ import {
 
 const queryClient = new QueryClient();
 
+// React Query provider component
 export function ReactQueryProvider({
   children,
 }: {

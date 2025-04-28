@@ -1,5 +1,6 @@
+// Mail message flags
 export enum MailFlag {
-  Seen = "\\Seen",
-  Deleted = "\\Deleted",
-  Flagged = "\\Flagged",
+  Seen = "\\Seen", // Marked as read
+  Deleted = "\\Deleted", // Marked for deletion
+  Flagged = "\\Flagged", // Starred
 }

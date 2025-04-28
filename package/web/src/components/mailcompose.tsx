@@ -21,6 +21,8 @@ import { useRouter } from "next/navigation";
 
 // TODO: Add contact integration
 // TODO: Fix multi-recipient input
+
+// Mail compose component properties interface
 interface MailComposeProps {
   onSend?: (data: {
     to: string[];
@@ -44,7 +46,8 @@ interface MailComposeProps {
 
 // TODO: Fix mail rendering for forwarding
 // TODO: Injection security testing!!! (should sandbox if possible)
-// TODO: Add proper headers when forwarding
+
+// Mail message compose component
 export default function MailCompose({
   defaultTo = [],
   defaultSubject = "",
@@ -52,6 +55,7 @@ export default function MailCompose({
   accounts = [],
   currentAccountId = "",
 }: MailComposeProps) {
+  // State variables for the mail compose component
   const [to, setTo] = useState<string[]>(defaultTo);
   const [cc, setCc] = useState<string[]>([]);
   const [bcc, setBcc] = useState<string[]>([]);
@@ -63,29 +67,37 @@ export default function MailCompose({
   const [headers, setHeaders] = useState<Record<string, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Use next router for navigation
   const router = useRouter();
 
   useEffect(() => {
+    // Only run this effect on the client side
     if (typeof window == "undefined") return;
 
+    // Get url search parameters
     const urlParams = new URL(location.href).searchParams;
 
-    const pTo = urlParams.get("to");
-    const pAction = urlParams.get("action");
-    const pSourceMessageId = urlParams.get("src-msg-id");
-    const pSourceMessageMailbox = urlParams.get("src-msg-mbox");
+    // Extract parameters from the URL (used for forwarding/replying)
+    const paramTo = urlParams.get("to");
+    const paramAction = urlParams.get("action");
+    const paramSourceMessageId = urlParams.get("src-msg-id");
+    const paramSourceMessageMailbox = urlParams.get("src-msg-mbox");
 
     (async () => {
-      if (pTo) setTo(pTo.split(",").map((email) => email.trim()));
+      // If there is a recipient set in the params, set it
+      if (paramTo) setTo(paramTo.split(",").map((email) => email.trim()));
 
-      if (pSourceMessageId && pSourceMessageMailbox) {
+      // If there is a source message ID and mailbox, fetch the message
+      if (paramSourceMessageId && paramSourceMessageMailbox) {
+        // Fetch the message from the server
         const message = await trpc.mailRouter.getMailMessage.query({
           accountId: currentAccountId,
-          mailbox: pSourceMessageMailbox,
-          messageId: pSourceMessageId,
+          mailbox: paramSourceMessageMailbox,
+          messageId: paramSourceMessageId,
         });
 
-        if (pAction === "forward") {
+        if (paramAction === "forward") {
+          // If the action is forwarding, set the subject, body and headers
           setSubject(`Fwd: ${message.subject}`);
           setBody(
             [
@@ -99,12 +111,14 @@ export default function MailCompose({
             ].join("<br />")
           );
           setHeaders({
+            // Add the original message to reference and reply headers
             References: (message.headers as any)["Message-ID"],
             "In-Reply-To": (message.headers as any)["Message-ID"],
           });
         }
 
-        if (pAction == "reply") {
+        if (paramAction == "reply") {
+          // If the action is replying, set the subject, body and headers
           setSubject(`Re: ${message.subject}`);
           setTo(
             (
@@ -112,6 +126,8 @@ export default function MailCompose({
             ).split(",")
           );
           setHeaders({
+            // Set the reference header as in the original message (with fallback to the original message)
+            // and the reply header to the original message
             References:
               (message.headers as any)["References"] ??
               (message.headers as any)["Message-ID"],
@@ -122,23 +138,32 @@ export default function MailCompose({
     })();
   }, []);
 
+  // Get the current account from the list of accounts
   const currentAccount =
     accounts.find((account) => account.id === currentAccountId) || accounts[0];
 
+  // Function to handle file input click
   const handleAttachmentClick = () => {
+    // Open the file input dialog
     fileInputRef.current?.click();
   };
 
+  // Function to handle file input change
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
+      // Add the selected files to the attachments state
       setAttachments([...attachments, ...Array.from(e.target.files)]);
     }
   };
 
+  // Function to remove an attachment from the attachments state
   const removeAttachment = (index: number) => {
+    // Remove the attachment at the specified index
     setAttachments(attachments.filter((_, i) => i !== index));
   };
 
+  // Function to handle recipient input change
+  // TODO: Fix multi-recipient input
   const handleRecipientChange = (
     value: string,
     setter: React.Dispatch<React.SetStateAction<string[]>>
@@ -148,11 +173,14 @@ export default function MailCompose({
       .split(",")
       .map((email) => email.trim())
       .filter((email) => email);
+
     setter(recipients);
   };
 
+  // Function to handle sending the email
   const handleSend = async () => {
     try {
+      // Set loading state
       setIsSending(true);
 
       const files: {
@@ -160,13 +188,16 @@ export default function MailCompose({
         content: string;
       }[] = [];
 
+      // Iterate over the attachments
       for (const file of attachments) {
         const reader = new FileReader();
 
+        // Read the file as a data URL
         reader.readAsDataURL(file);
 
         await new Promise<void>((r) => {
           reader.onload = () => {
+            // Push the file name and content (base64) to the files array
             files.push({
               name: file.name,
               content: reader.result as string,
@@ -177,6 +208,7 @@ export default function MailCompose({
         });
       }
 
+      // Send the data to the server
       await trpc.mailRouter.sendMailMessage.mutate({
         accountId: currentAccountId,
         data: {
@@ -190,10 +222,12 @@ export default function MailCompose({
         },
       });
 
+      // Go back to the previous page
       router.back();
     } catch (error) {
       console.error("Failed to send email:", error);
     } finally {
+      // Reset the loading state
       setIsSending(false);
     }
   };

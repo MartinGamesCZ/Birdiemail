@@ -19,14 +19,17 @@ import Cookies from "js-cookie";
 import { SlashCommands } from "@/commands";
 import { toast } from "react-toastify";
 
+// Command center component props interface
 interface CommandCenterProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   onCommand?: (command: string) => void;
 }
 
+// Command type definition
 type CommandType = "navigation" | "action" | "mail" | "settings";
 
+// Command interface definition
 interface Command {
   id: string;
   name: string;
@@ -37,19 +40,20 @@ interface Command {
   action: () => void;
 }
 
-export function CommandCenter({
-  isOpen,
-  setIsOpen,
-  onCommand,
-}: CommandCenterProps) {
+// Command center component
+export function CommandCenter({ isOpen, setIsOpen }: CommandCenterProps) {
   const [query, setQuery] = useState("");
+
+  // Use next router for navigation
   const router = useRouter();
 
+  // Query to check if the user is an admin
   const { data: adminAccess } = useQuery({
     queryKey: ["user", "isAdmin"],
     queryFn: async () => await trpc.adminRouter.isAuthorized.query(),
   });
 
+  // Query to get the user's mailboxes
   const { data: mailboxes } = useQuery({
     queryKey: ["mail", "mailboxes", Cookies.get("current_account_id") ?? ""],
     queryFn: async () =>
@@ -59,18 +63,23 @@ export function CommandCenter({
   });
 
   useEffect(() => {
+    // Escape keypress handler to close the command center
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setIsOpen(false);
     };
 
+    // Add event listener for keydown events
     window.addEventListener("keydown", handleEscape);
+
+    // Cleanup event listener on component unmount
     return () => window.removeEventListener("keydown", handleEscape);
   }, [setIsOpen]);
 
-  console.log(mailboxes);
-
+  // Check if the query is a slash command
+  // A slash command is a command that starts with a "/" and has at least one character after it
   const isSlashCommand = query.startsWith("/") && query.length > 1;
 
+  // Define the actions available in the command center
   const commands: Command[] = [
     ...(isSlashCommand
       ? [
@@ -85,11 +94,8 @@ export function CommandCenter({
                 (c) => c.name === command.split(" ")[0]
               );
 
-              if (slashCommand) {
-                slashCommand.exec();
-              } else {
-                toast.error(`Command "${command.split(" ")[0]}" not found`);
-              }
+              if (slashCommand) slashCommand.exec();
+              else toast.error(`Command "${command.split(" ")[0]}" not found`);
 
               setIsOpen(false);
               setQuery("");
@@ -194,6 +200,7 @@ export function CommandCenter({
     },
   ];
 
+  // Search for commands based on the query
   const filteredCommands =
     query === ""
       ? commands
