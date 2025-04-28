@@ -1,5 +1,6 @@
 import { getCookie } from "@/utils/cookie";
 import { AttachmentContent } from "./client";
+import { Titlebar } from "@/components/desktop/titlebar";
 
 export default async function Page({
   searchParams,
@@ -8,9 +9,10 @@ export default async function Page({
     boxId: string;
     messageId: string;
     attachmentId: string;
+    isDesktop?: string;
   }>;
 }) {
-  const { boxId, messageId, attachmentId } = await searchParams;
+  const { boxId, messageId, attachmentId, isDesktop } = await searchParams;
 
   return (
     <AttachmentContent
@@ -18,6 +20,7 @@ export default async function Page({
       mailbox={boxId}
       messageId={messageId}
       attachmentId={attachmentId}
+      isDesktop={isDesktop === "true"}
     />
   );
 }

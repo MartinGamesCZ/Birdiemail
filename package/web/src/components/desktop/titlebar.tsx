@@ -23,10 +23,11 @@ declare const ipcRenderer: any;
 // Titlebar properties interface
 interface TitlebarProps {
   title?: string;
+  minimal?: boolean;
 }
 
 // Titlebar component for the desktop app
-export function Titlebar({ title = "Birdiemail" }: TitlebarProps) {
+export function Titlebar({ title = "Birdiemail", minimal }: TitlebarProps) {
   const [isMaximized, setIsMaximized] = useState(true);
   const [isCommandCenterOpen, setIsCommandCenterOpen] = useState(false);
 
@@ -70,6 +71,7 @@ export function Titlebar({ title = "Birdiemail" }: TitlebarProps) {
   const handleClose = () => {
     // Send close event to the main process
     if (typeof ipcRenderer !== "undefined") ipcRenderer.send("win.close");
+    else window.close();
   };
 
   return (
@@ -79,50 +81,56 @@ export function Titlebar({ title = "Birdiemail" }: TitlebarProps) {
           <span className="font-medium text-md">{title}</span>
         </div>
 
-        <div className="flex justify-center items-center w-2/4 app-drag-container">
-          <button
-            className="flex items-center px-3 py-1 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 w-1/2 no-app-container"
-            onClick={() => setIsCommandCenterOpen(true)}
-          >
-            <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
-            <span>Search or type a command</span>
-            <kbd className="ml-auto bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs rounded">
-              Ctrl+K
-            </kbd>
-          </button>
-        </div>
+        {!minimal && (
+          <div className="flex justify-center items-center w-2/4 app-drag-container">
+            <button
+              className="flex items-center px-3 py-1 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 w-1/2 no-app-container"
+              onClick={() => setIsCommandCenterOpen(true)}
+            >
+              <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
+              <span>Search or type a command</span>
+              <kbd className="ml-auto bg-white dark:bg-gray-800 px-1.5 py-0.5 text-xs rounded">
+                Ctrl+K
+              </kbd>
+            </button>
+          </div>
+        )}
 
         <div className="flex items-center justify-end w-1/4">
           <DevToolsButton />
           <ThemeToggleButton />
 
-          <div className="flex px-3">
+          <div className="flex pl-3">
+            {!minimal && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
+                  onClick={handleMinimize}
+                  title="Minimize"
+                >
+                  <MinusIcon className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
+                  onClick={handleMaximizeRestore}
+                  title={isMaximized ? "Restore" : "Maximize"}
+                >
+                  {isMaximized ? (
+                    <ArrowsPointingInIcon className="h-5 w-5" />
+                  ) : (
+                    <ArrowsPointingOutIcon className="h-5 w-5" />
+                  )}
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               size="icon-sm"
-              className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
-              onClick={handleMinimize}
-              title="Minimize"
-            >
-              <MinusIcon className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="rounded-none hover:bg-gray-200 dark:hover:bg-gray-700 h-10 w-10"
-              onClick={handleMaximizeRestore}
-              title={isMaximized ? "Restore" : "Maximize"}
-            >
-              {isMaximized ? (
-                <ArrowsPointingInIcon className="h-5 w-5" />
-              ) : (
-                <ArrowsPointingOutIcon className="h-5 w-5" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="rounded-none hover:bg-red-500 hover:text-white h-10 w-10"
+              className="rounded-none hover:bg-red-500 hover:text-white h-10 w-13 pr-3"
               onClick={handleClose}
               title="Close"
             >

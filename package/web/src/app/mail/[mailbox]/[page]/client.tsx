@@ -8,6 +8,7 @@ import { trpc } from "@/server/trpc";
 import { Mailbox } from "@/types/Mailbox";
 import { MailFlag } from "@/types/MailFlag";
 import { formatMailDate } from "@/utils/dateparser";
+import { checkAppIsDesktop } from "@/utils/desktop/app";
 import { formatByteSize } from "@/utils/format";
 import {
   ArrowDownLeftIcon,
@@ -336,7 +337,11 @@ export function MailMessage(props: {
 
   const handleAttachmentOpen = async (attachmentId: string) => {
     window.open(
-      `/mail/attachment?boxId=${props.mailbox}&messageId=${props.messageId}&attachmentId=${attachmentId}`
+      `/mail/attachment?boxId=${props.mailbox}&messageId=${
+        props.messageId
+      }&attachmentId=${attachmentId}${
+        checkAppIsDesktop() ? "&isDesktop=true" : ""
+      }`
     );
   };
 

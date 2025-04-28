@@ -84,6 +84,13 @@ export class Imap {
         },
         logger: false,
       });
+
+      // Set up error event handler to prevent crashes
+      this.connection.on('error', (err) => {
+        console.error(`IMAP connection error: ${err.message}`);
+        // Mark the connection as needing reconnection
+        this.connection.authenticated = false;
+      });
     } catch (error) {
       console.error(`Failed to create IMAP session: ${error.message}`);
       throw error; // Propagate the error as this is a critical operation
@@ -247,12 +254,62 @@ export class Imap {
                 page == 1 ? '*' : mbox.exists - perPage * (page - 1);
               const range = `${startMessage}:${endMessage}`;
 
-              // Fetch the messages from the mailbox
-              const msgs = await this.connection.fetch(range, {
-                envelope: true,
-                source: true,
-                flags: true,
-              });
+              // Fetch the messages from the mailbox with retry logic
+              let msgs;
+              let fetchRetries = 0;
+              const maxFetchRetries = 3;
+
+              while (fetchRetries <= maxFetchRetries) {
+                try {
+                  msgs = await this.connection.fetch(range, {
+                    envelope: true,
+                    source: true,
+                    flags: true,
+                  });
+                  break; // Exit the loop if fetch is successful
+                } catch (error) {
+                  fetchRetries++;
+                  console.error(
+                    `Fetch attempt ${fetchRetries} failed: ${error.message}`,
+                  );
+
+                  if (fetchRetries <= maxFetchRetries) {
+                    // Wait before retry, increasing delay for each retry
+                    const delayMs = 1000 * fetchRetries;
+                    console.log(`Retrying fetch in ${delayMs}ms...`);
+                    await new Promise((resolve) =>
+                      setTimeout(resolve, delayMs),
+                    );
+
+                    // Try to reconnect before retrying
+                    try {
+                      await this.reconnect();
+                      await this.connection.mailboxOpen(
+                        decodeURIComponent(id).replace(/\:/gm, '/'),
+                      );
+                    } catch (reconnectError) {
+                      console.error(
+                        `Failed to reconnect: ${reconnectError.message}`,
+                      );
+                      // Continue anyway, the next fetch attempt will fail gracefully
+                    }
+                  } else {
+                    console.error(
+                      `All fetch retries failed for range ${range}`,
+                    );
+                    // Return empty result instead of crashing
+                    return {
+                      data: [],
+                      meta: {
+                        page,
+                        total: mesagesTotal,
+                        totalPages: pages,
+                        perPage,
+                      },
+                    };
+                  }
+                }
+              }
 
               // Variable to store the results
               let result: {
@@ -557,6 +614,68 @@ export class Imap {
       };
     } catch (error) {
       console.error(`Error accessing mailbox: ${error.message}`);
+      return null;
+    }
+  }
+
+  // Method to safely execute IMAP fetch operations with proper error handling
+  private async safeFetch(
+    range: string,
+    options: any,
+    id: string,
+    retryCount: number = 0,
+  ): Promise<any> {
+    const maxRetries = 3;
+    try {
+      // Ensure we have a valid connection
+      if (!this.connection.authenticated) {
+        await this.reconnect();
+        try {
+          await this.connection.mailboxOpen(
+            decodeURIComponent(id).replace(/\:/gm, '/'),
+          );
+        } catch (error) {
+          console.error(
+            `Failed to open mailbox after reconnect: ${error.message}`,
+          );
+        }
+      }
+
+      return await this.connection.fetch(range, options);
+    } catch (error) {
+      console.error(
+        `Fetch operation failed (attempt ${retryCount + 1}): ${error.message}`,
+      );
+
+      if (retryCount < maxRetries) {
+        // Exponential backoff delay
+        const delayMs = 1000 * Math.pow(2, retryCount);
+        console.log(`Retrying fetch in ${delayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+        // Force reconnection for network errors
+        if (
+          error.code === 'ETIMEDOUT' ||
+          error.code === 'ECONNRESET' ||
+          error.code === 'EPIPE' ||
+          !this.connection.authenticated
+        ) {
+          try {
+            await this.reconnect();
+            await this.connection.mailboxOpen(
+              decodeURIComponent(id).replace(/\:/gm, '/'),
+            );
+          } catch (reconnectError) {
+            console.error(`Reconnection failed: ${reconnectError.message}`);
+          }
+        }
+
+        // Recursive retry with incremented counter
+        return this.safeFetch(range, options, id, retryCount + 1);
+      }
+
+      // If we've exhausted retries, return null to handle gracefully
+      console.error(`All fetch retries exhausted for range ${range}`);
       return null;
     }
   }
