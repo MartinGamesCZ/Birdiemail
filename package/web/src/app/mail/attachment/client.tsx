@@ -3,6 +3,8 @@
 import { trpc } from "@/server/trpc";
 import { useQuery } from "@tanstack/react-query";
 
+// TODO: Add warning for malware
+
 export function AttachmentContent(props: {
   accountId: string;
   mailbox: string;
@@ -35,7 +37,17 @@ export function AttachmentContent(props: {
     );
   }
 
+  if (attachment && attachment.type.startsWith("application/pdf")) {
+    const blob = new Blob([Buffer.from(attachment.content, "base64")], {
+      type: attachment.type,
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    return <iframe src={url} width={"100%"} height={"100%"}></iframe>;
+  }
+
   if (isLoading) return <p>Loading</p>;
 
-  return <p>Wrong file type lol</p>;
+  return <p>Unknown file type '{attachment?.type}'</p>;
 }
