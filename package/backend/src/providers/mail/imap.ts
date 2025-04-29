@@ -108,6 +108,15 @@ export class Imap {
       ) {
         await this.connection.connect().catch((error) => {
           console.error(`IMAP connection failed: ${error.message}`);
+
+          // If we can't reuse the ImapFlow instance, create a new one
+          if (
+            error.message &&
+            error.message.includes('Can not re-use ImapFlow instance')
+          ) {
+            throw new Error('CONNECTION_NEEDS_RESET');
+          }
+
           throw error;
         });
       }
@@ -119,6 +128,15 @@ export class Imap {
       return this.connection;
     } catch (error) {
       console.error(`Failed to connect to IMAP server: ${error.message}`);
+
+      // Special handling for connection reset needs
+      if (error.message === 'CONNECTION_NEEDS_RESET') {
+        console.log('Connection needs reset, creating new session');
+        delete sessions[this.accountId];
+        await this.createSession();
+        return this.connect(true);
+      }
+
       throw error; // Propagate the error as this is a critical operation
     }
   }
@@ -166,11 +184,38 @@ export class Imap {
       // Wait for a second before reconnecting
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // Create a new ImapFlow instance instead of reusing the existing one
+      await this.createSession();
+
       // Connect to the server again
       await this.connect(true);
     } catch (error) {
       console.error(`Error during IMAP reconnection: ${error.message}`);
-      throw error; // Propagate the error as this is a critical operation
+
+      // If we get "Can not re-use ImapFlow instance", create a new session and try again
+      if (
+        error.message &&
+        error.message.includes('Can not re-use ImapFlow instance')
+      ) {
+        console.log('Creating new ImapFlow instance due to reuse error');
+        try {
+          // Remove the session from global sessions
+          delete sessions[this.accountId];
+
+          // Create a completely new session
+          await this.createSession();
+
+          // Connect to the server again
+          await this.connect(true);
+        } catch (secondError) {
+          console.error(
+            `Second reconnection attempt failed: ${secondError.message}`,
+          );
+          throw secondError;
+        }
+      } else {
+        throw error; // Propagate other errors
+      }
     }
   }
 
@@ -189,10 +234,25 @@ export class Imap {
   async mailbox(id: string) {
     try {
       // Attempt to connect to the server
-      await this.connect().catch((error) => {
+      try {
+        await this.connect();
+      } catch (error) {
         console.error(`Error connecting to mailbox: ${error.message}`);
-        throw error;
-      });
+
+        // If we can't reuse the ImapFlow instance, try to recreate it
+        if (
+          error.message &&
+          (error.message.includes('Can not re-use ImapFlow instance') ||
+            error.message === 'CONNECTION_NEEDS_RESET')
+        ) {
+          console.log('Recreating ImapFlow instance for mailbox access');
+          delete sessions[this.accountId];
+          await this.createSession();
+          await this.connect(true);
+        } else {
+          throw error;
+        }
+      }
 
       // Decode the mailbox ID
       id = decodeURIComponent(id);
@@ -291,12 +351,45 @@ export class Imap {
                       console.error(
                         `Failed to reconnect: ${reconnectError.message}`,
                       );
-                      // Continue anyway, the next fetch attempt will fail gracefully
+                      // Attempt another reconnection with more delay
+                      try {
+                        await new Promise((resolve) =>
+                          setTimeout(resolve, 2000),
+                        );
+                        await this.reconnect();
+                        await this.connection.mailboxOpen(
+                          decodeURIComponent(id).replace(/\:/gm, '/'),
+                        );
+                        console.log(
+                          'Reconnection successful on second attempt',
+                        );
+                      } catch (secondReconnectError) {
+                        console.error(
+                          `Second reconnection attempt failed: ${secondReconnectError.message}`,
+                        );
+                        // Continue anyway, the next fetch attempt will fail gracefully
+                      }
                     }
                   } else {
                     console.error(
                       `All fetch retries failed for range ${range}`,
                     );
+                    // Try one final reconnect before giving up
+                    try {
+                      console.log('Attempting final reconnection...');
+                      await new Promise((resolve) => setTimeout(resolve, 3000));
+                      await this.reconnect();
+                      await this.connection.mailboxOpen(
+                        decodeURIComponent(id).replace(/\:/gm, '/'),
+                      );
+                      console.log(
+                        'Final reconnection successful, but returning empty result for this fetch',
+                      );
+                    } catch (finalReconnectError) {
+                      console.error(
+                        `Final reconnection attempt failed: ${finalReconnectError.message}`,
+                      );
+                    }
                     // Return empty result instead of crashing
                     return {
                       data: [],
