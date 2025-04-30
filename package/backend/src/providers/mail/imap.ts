@@ -1,6 +1,7 @@
 import { ImapFlow } from 'imapflow';
 import { extract } from 'letterparser';
 import { convert } from 'html-to-text';
+import { parseInternalHeaders } from './headers';
 
 // Variable to store active IMAP sessions for reuse
 let sessions: {
@@ -546,6 +547,8 @@ export class Imap {
                     .map((b) => b.trim()),
                 ),
             );
+
+            headers.internal = parseInternalHeaders(headers);
 
             // Generate a preview of the message body by stripping HTML tags,
             // replacing new lines with spaces, and trimming the result

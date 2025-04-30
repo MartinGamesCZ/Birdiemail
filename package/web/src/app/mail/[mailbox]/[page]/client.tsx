@@ -368,7 +368,7 @@ export function MailMessage(props: {
         />
         <div className="flex-1 min-w-0 items-center">
           <h2 className="text-lg font-semibold truncate leading-xs">
-            {data.sender.name}
+            {data.sender.internal?.name ?? data.sender.name}
           </h2>
           <div className="flex justify-between items-center">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate mt-[-5px]">
