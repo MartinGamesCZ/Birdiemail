@@ -134,7 +134,36 @@ const appRouter = t.router({
         status: z.literal('error'),
         message: z.string(),
       }),
-    ])).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    ])).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    updateMailAccount: publicProcedure.input(z.object({
+      name: z.string(),
+      accountId: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    changePassword: publicProcedure.input(z.object({
+      oldPassword: z.string(),
+      newPassword: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({
+          token: z.string(),
+          encryptionKey: z.string(),
+        }),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({
     getMail: publicProcedure.input(z.object({
@@ -149,10 +178,16 @@ const appRouter = t.router({
           sender: z.object({
             name: z.string(),
             email: z.string(),
+            internal: z.optional(
+              z.object({
+                name: z.string(),
+              }),
+            ),
           }),
           body: z.string(),
           flags: z.array(z.string()),
           date: z.date(),
+          headers: z.record(z.string(), z.any()),
           files: z.array(
             z.object({
               name: z.string(),

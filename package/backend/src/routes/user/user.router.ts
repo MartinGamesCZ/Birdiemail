@@ -270,4 +270,79 @@ export class UserRouter {
     // Use the user service to get the user's information
     return await this.userService.userInfo(context.user);
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      name: z.string(),
+      accountId: z.string(),
+    }),
+    output: z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ]),
+  })
+  async updateMailAccount(
+    @Input()
+    data: {
+      name: string;
+      accountId: string;
+    },
+    @Ctx() context: any,
+  ) {
+    // Check if the user is authenticated
+    if (!context.authorized) return ErrorResponse('Unauthorized');
+
+    // Use the user service to update the mail account name
+    return await this.userService.updateMailAccount(
+      context.user,
+      data.accountId,
+      data.name,
+    );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      oldPassword: z.string(),
+      newPassword: z.string(),
+    }),
+    output: z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({
+          token: z.string(),
+          encryptionKey: z.string(),
+        }),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ]),
+  })
+  async changePassword(
+    @Input()
+    data: {
+      oldPassword: string;
+      newPassword: string;
+    },
+    @Ctx() context: any,
+  ) {
+    // Check if the user is authenticated
+    if (!context.authorized) return ErrorResponse('Unauthorized');
+
+    // Use the user service to change the password for the mail account
+    return await this.userService.changePassword(
+      context.user,
+      data.oldPassword,
+      data.newPassword,
+    );
+  }
 }

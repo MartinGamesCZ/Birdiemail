@@ -71,6 +71,8 @@ export default function Mailbox(props: {
     retryDelay: 4000,
   });
 
+  console.log(messages);
+
   // State to manage the currently selected account
   const [currentAccount, setCurrentAccount] = useState<Account>(
     props.accounts.find((account) => account.id === props.currentAccount) ||
@@ -269,7 +271,8 @@ function Mail(props: {
             <Avatar
               name={
                 props.message.sender.name?.length > 0
-                  ? props.message.sender.name
+                  ? props.message.sender.internal?.name ??
+                    props.message.sender.name
                   : props.message.sender.email
               }
               size="lg"
@@ -286,7 +289,8 @@ function Mail(props: {
                   )}
                 >
                   {props.message.sender.name?.length > 0
-                    ? props.message.sender.name
+                    ? props.message.sender.internal?.name ??
+                      props.message.sender.name
                     : props.message.sender.email}
                 </p>
                 <div className="flex items-center gap-1">

@@ -326,7 +326,9 @@ export class Imap {
                     envelope: true,
                     source: true,
                     flags: true,
+                    headers: true,
                   });
+
                   break; // Exit the loop if fetch is successful
                 } catch (error) {
                   fetchRetries++;
@@ -416,6 +418,9 @@ export class Imap {
                 body: string;
                 date: Date;
                 flags: string[];
+                headers: {
+                  [key: string]: any;
+                };
                 files: {
                   name: string;
                 }[];
@@ -451,6 +456,22 @@ export class Imap {
                   // Iterate through the flags and add them to the flags array
                   msg.flags.forEach((flag) => flags.push(flag));
 
+                  // Create a headers object from the message headers
+                  const headers = Object.fromEntries(
+                    msg.headers
+                      .toString()
+                      .split('\n')
+                      .map((a) =>
+                        a
+                          .trim()
+                          .split(': ')
+                          .map((b) => b.trim()),
+                      ),
+                  );
+
+                  // Parse internal headers
+                  headers.internal = parseInternalHeaders(headers);
+
                   // Push the message data to the result array
                   result.push({
                     id: msg.uid?.toString() ?? '',
@@ -463,6 +484,7 @@ export class Imap {
                       preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
                     date: msg.envelope?.date ?? new Date(0),
                     flags: flags,
+                    headers: headers,
                     files:
                       data.attachments?.map((a) => ({
                         name: a.filename ?? '',
@@ -548,6 +570,7 @@ export class Imap {
                 ),
             );
 
+            // Parse internal headers
             headers.internal = parseInternalHeaders(headers);
 
             // Generate a preview of the message body by stripping HTML tags,

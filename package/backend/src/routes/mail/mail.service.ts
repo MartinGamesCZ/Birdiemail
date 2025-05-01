@@ -49,8 +49,39 @@ export class MailService {
     // Fetch the list of emails in the specified mailbox
     const res = await (await connection.mailbox(mailbox))?.list(page);
 
+    const out: any[] = [];
+
+    for (const message of res?.data ?? []) {
+      // Get sender details if sent using birdiemail
+      const sender = message.headers.internal?.sender?.accountId;
+
+      if (sender) {
+        // Get the sender account details
+        const senderAccount = await Repo.mailAccount.findOne({
+          where: {
+            id: sender,
+          },
+        });
+
+        // If sender account is found, set the sender details in the message
+        if (senderAccount)
+          message.sender = {
+            ...message.sender,
+            internal: {
+              name: senderAccount.name,
+            },
+          } as any;
+      }
+
+      // Add the message to the output array
+      out.push(message);
+    }
+
     // Return the data
-    return res;
+    return {
+      ...res,
+      data: out,
+    };
   }
 
   // Function to get a specific email message
@@ -97,12 +128,14 @@ export class MailService {
     const sender = message.headers.internal?.sender?.accountId;
 
     if (sender) {
+      // Get the sender account details
       const senderAccount = await Repo.mailAccount.findOne({
         where: {
           id: sender,
         },
       });
 
+      // If sender account is found, set the sender details in the message
       if (senderAccount)
         message.sender = {
           ...message.sender,

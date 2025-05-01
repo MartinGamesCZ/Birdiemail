@@ -37,10 +37,16 @@ export class MailRouter {
           sender: z.object({
             name: z.string(),
             email: z.string(),
+            internal: z.optional(
+              z.object({
+                name: z.string(),
+              }),
+            ),
           }),
           body: z.string(),
           flags: z.array(z.string()),
           date: z.date(),
+          headers: z.record(z.string(), z.any()),
           files: z.array(
             z.object({
               name: z.string(),

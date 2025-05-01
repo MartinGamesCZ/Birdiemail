@@ -362,7 +362,9 @@ export function MailMessage(props: {
       <div className="flex gap-4 items-center mt-4 mb-2 mr-4">
         <Avatar
           name={
-            data.sender.name?.length > 0 ? data.sender.name : data.sender.email
+            data.sender.name?.length > 0
+              ? data.sender.internal?.name ?? data.sender.name
+              : data.sender.email
           }
           size="lg"
         />

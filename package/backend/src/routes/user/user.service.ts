@@ -14,6 +14,7 @@ import { getCurrentYear } from 'src/utils/datetime';
 import {
   createUserToken,
   decodeUserToken,
+  decryptMailPassword,
   encryptMailPassword,
   getMailPasswordEncryptionKey,
 } from 'src/utils/encryption';
@@ -452,6 +453,148 @@ export class UserService {
 
     // Return user information
     return OkResponse(user);
+  }
+
+  // Function to update mail account details
+  async updateMailAccount(user: UserEntity, accountId: string, name: string) {
+    // Check if the name is valid
+    if (!name || name.length < 3 || name.length > 128)
+      return ErrorResponse('Invalid name');
+
+    // Check if the user is valid
+    if (!user) return ErrorResponse('User not found');
+
+    // Check if the mail account exists
+    const mailAccount = await Repo.mailAccount.findOne({
+      where: {
+        id: accountId,
+        user: {
+          id: user.id,
+        },
+      },
+    });
+
+    // Return error if mail account not found
+    if (!mailAccount) return ErrorResponse('Mail account not found');
+
+    // Update the mail account details
+    mailAccount.name = name;
+    mailAccount.updatedAt = new Date();
+
+    // Save the changes to the repository and handle any errors
+    const res = await Repo.mailAccount.save(mailAccount).catch((e) => ({
+      error: e.message,
+    }));
+
+    // Return error if saving failed
+    if ('error' in res) return ErrorResponse(res.error);
+
+    // Return success response
+    return OkResponse({
+      id: res.id,
+    });
+  }
+
+  // Function for changing users password
+  async changePassword(
+    user: UserEntity,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    // Check if the password is strong enough
+    if (!isStrongPassword(newPassword))
+      return ErrorResponse('Password is not strong enough');
+    if (!oldPassword) return ErrorResponse('Invalid password');
+
+    // Check if the user is valid
+    if (!user) return ErrorResponse('User not found');
+
+    // Get users password
+    const userData = await Repo.user.findOne({
+      where: {
+        id: user.id,
+      },
+      select: ['password'],
+    });
+
+    // Return error if user not found
+    if (!userData) return ErrorResponse('User not found');
+
+    // Check if the old password is correct
+    const passwordsMatch = compareSync(oldPassword, userData.password);
+
+    // Return error if passwords do not match
+    if (!passwordsMatch) return ErrorResponse('Invalid current password');
+
+    // Update the user's password
+    user.password = hashSync(newPassword, 12);
+    user.updatedAt = new Date();
+    user.hash = randomUUID().replace(/-/g, ''); // Generate a new hash for the user
+
+    // Save the changes to the repository and handle any errors
+    const res = await Repo.user.save(user).catch((e) => ({
+      error: e.message,
+    }));
+
+    // Return error if saving failed
+    if ('error' in res) return ErrorResponse(res.error);
+
+    // Derive new and old encryption keys
+    const newEncryptionKey = getMailPasswordEncryptionKey(user.id, newPassword);
+    const oldEncryptionKey = getMailPasswordEncryptionKey(user.id, oldPassword);
+
+    // Re-encrypt the mail passwords
+    await this.reEncryptMailPasswords(user, oldEncryptionKey, newEncryptionKey);
+
+    // Generate a new jwt token and encryption key for the user
+    const session = await this.signin(user.email, newPassword);
+
+    console.log(session);
+
+    // Return new session data
+    return session;
+  }
+
+  // Function to re-encrypt mail passwords
+  private async reEncryptMailPasswords(
+    user: UserEntity,
+    encryptionKey: string,
+    newEncryptionKey: string,
+  ) {
+    // Get all mail accounts for the user
+    const mailAccounts = await Repo.mailAccount.find({
+      where: {
+        user: {
+          id: user.id,
+        },
+      },
+    });
+
+    // Loop through each mail account and re-encrypt the password
+    for (const account of mailAccounts) {
+      // Find the password in the database
+      const mailAccountDetails = await Repo.mailAccount.findOne({
+        where: {
+          id: account.id,
+        },
+        select: ['password'],
+      });
+
+      // Return error if mail account not found
+      if (!mailAccountDetails) continue;
+
+      // Decrypt the password using the old encryption key
+      const decrypted = decryptMailPassword(
+        encryptionKey,
+        mailAccountDetails.password,
+      );
+
+      // Encrypt the password using the new encryption key
+      account.password = encryptMailPassword(newEncryptionKey, decrypted);
+
+      // Save the changes to the repository
+      await Repo.mailAccount.save(account);
+    }
   }
 
   // Function to check if a user exists by email
