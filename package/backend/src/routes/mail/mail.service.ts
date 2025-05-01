@@ -5,10 +5,13 @@ import { UserEntity } from 'src/db/user.entity';
 import { Imap } from 'src/providers/mail/imap';
 import { Smtp } from 'src/providers/mail/smtp';
 import { decryptMailPassword } from 'src/utils/encryption';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class MailService {
   private readonly smtpConnections = new Map<string, Smtp>();
+
+  constructor(private readonly userService: UserService) {}
 
   // Function to get a list of emails in a mailbox
   async getMail(
@@ -84,7 +87,33 @@ export class MailService {
     );
 
     // Fetch the email message from the specified mailbox
-    return await (await connection.mailbox(mailbox))?.message(messageId);
+    const message: any = await (
+      await connection.mailbox(mailbox)
+    )?.message(messageId);
+
+    if (!message) return message;
+
+    // Get sender details if sent using birdiemail
+    const sender = message.headers.internal?.sender?.accountId;
+
+    if (sender) {
+      const senderAccount = await Repo.mailAccount.findOne({
+        where: {
+          id: sender,
+        },
+      });
+
+      if (senderAccount)
+        message.sender = {
+          ...message.sender,
+          internal: {
+            name: senderAccount.name,
+          },
+        };
+    }
+
+    // Return the email message
+    return message;
   }
 
   // Function to get the raw email message

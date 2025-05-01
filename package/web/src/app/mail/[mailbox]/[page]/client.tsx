@@ -8,6 +8,7 @@ import { trpc } from "@/server/trpc";
 import { Mailbox } from "@/types/Mailbox";
 import { MailFlag } from "@/types/MailFlag";
 import { formatMailDate } from "@/utils/dateparser";
+import { checkAppIsDesktop } from "@/utils/desktop/app";
 import { formatByteSize } from "@/utils/format";
 import {
   ArrowDownLeftIcon,
@@ -336,7 +337,11 @@ export function MailMessage(props: {
 
   const handleAttachmentOpen = async (attachmentId: string) => {
     window.open(
-      `/mail/attachment?boxId=${props.mailbox}&messageId=${props.messageId}&attachmentId=${attachmentId}`
+      `/mail/attachment?boxId=${props.mailbox}&messageId=${
+        props.messageId
+      }&attachmentId=${attachmentId}${
+        checkAppIsDesktop() ? "&isDesktop=true" : ""
+      }`
     );
   };
 
@@ -363,7 +368,7 @@ export function MailMessage(props: {
         />
         <div className="flex-1 min-w-0 items-center">
           <h2 className="text-lg font-semibold truncate leading-xs">
-            {data.sender.name}
+            {data.sender.internal?.name ?? data.sender.name}
           </h2>
           <div className="flex justify-between items-center">
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate mt-[-5px]">

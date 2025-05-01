@@ -1,6 +1,7 @@
 import { ImapFlow } from 'imapflow';
 import { extract } from 'letterparser';
 import { convert } from 'html-to-text';
+import { parseInternalHeaders } from './headers';
 
 // Variable to store active IMAP sessions for reuse
 let sessions: {
@@ -84,6 +85,13 @@ export class Imap {
         },
         logger: false,
       });
+
+      // Set up error event handler to prevent crashes
+      this.connection.on('error', (err) => {
+        console.error(`IMAP connection error: ${err.message}`);
+        // Mark the connection as needing reconnection
+        this.connection.authenticated = false;
+      });
     } catch (error) {
       console.error(`Failed to create IMAP session: ${error.message}`);
       throw error; // Propagate the error as this is a critical operation
@@ -101,6 +109,15 @@ export class Imap {
       ) {
         await this.connection.connect().catch((error) => {
           console.error(`IMAP connection failed: ${error.message}`);
+
+          // If we can't reuse the ImapFlow instance, create a new one
+          if (
+            error.message &&
+            error.message.includes('Can not re-use ImapFlow instance')
+          ) {
+            throw new Error('CONNECTION_NEEDS_RESET');
+          }
+
           throw error;
         });
       }
@@ -112,6 +129,15 @@ export class Imap {
       return this.connection;
     } catch (error) {
       console.error(`Failed to connect to IMAP server: ${error.message}`);
+
+      // Special handling for connection reset needs
+      if (error.message === 'CONNECTION_NEEDS_RESET') {
+        console.log('Connection needs reset, creating new session');
+        delete sessions[this.accountId];
+        await this.createSession();
+        return this.connect(true);
+      }
+
       throw error; // Propagate the error as this is a critical operation
     }
   }
@@ -159,11 +185,38 @@ export class Imap {
       // Wait for a second before reconnecting
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      // Create a new ImapFlow instance instead of reusing the existing one
+      await this.createSession();
+
       // Connect to the server again
       await this.connect(true);
     } catch (error) {
       console.error(`Error during IMAP reconnection: ${error.message}`);
-      throw error; // Propagate the error as this is a critical operation
+
+      // If we get "Can not re-use ImapFlow instance", create a new session and try again
+      if (
+        error.message &&
+        error.message.includes('Can not re-use ImapFlow instance')
+      ) {
+        console.log('Creating new ImapFlow instance due to reuse error');
+        try {
+          // Remove the session from global sessions
+          delete sessions[this.accountId];
+
+          // Create a completely new session
+          await this.createSession();
+
+          // Connect to the server again
+          await this.connect(true);
+        } catch (secondError) {
+          console.error(
+            `Second reconnection attempt failed: ${secondError.message}`,
+          );
+          throw secondError;
+        }
+      } else {
+        throw error; // Propagate other errors
+      }
     }
   }
 
@@ -182,10 +235,25 @@ export class Imap {
   async mailbox(id: string) {
     try {
       // Attempt to connect to the server
-      await this.connect().catch((error) => {
+      try {
+        await this.connect();
+      } catch (error) {
         console.error(`Error connecting to mailbox: ${error.message}`);
-        throw error;
-      });
+
+        // If we can't reuse the ImapFlow instance, try to recreate it
+        if (
+          error.message &&
+          (error.message.includes('Can not re-use ImapFlow instance') ||
+            error.message === 'CONNECTION_NEEDS_RESET')
+        ) {
+          console.log('Recreating ImapFlow instance for mailbox access');
+          delete sessions[this.accountId];
+          await this.createSession();
+          await this.connect(true);
+        } else {
+          throw error;
+        }
+      }
 
       // Decode the mailbox ID
       id = decodeURIComponent(id);
@@ -247,12 +315,95 @@ export class Imap {
                 page == 1 ? '*' : mbox.exists - perPage * (page - 1);
               const range = `${startMessage}:${endMessage}`;
 
-              // Fetch the messages from the mailbox
-              const msgs = await this.connection.fetch(range, {
-                envelope: true,
-                source: true,
-                flags: true,
-              });
+              // Fetch the messages from the mailbox with retry logic
+              let msgs;
+              let fetchRetries = 0;
+              const maxFetchRetries = 3;
+
+              while (fetchRetries <= maxFetchRetries) {
+                try {
+                  msgs = await this.connection.fetch(range, {
+                    envelope: true,
+                    source: true,
+                    flags: true,
+                  });
+                  break; // Exit the loop if fetch is successful
+                } catch (error) {
+                  fetchRetries++;
+                  console.error(
+                    `Fetch attempt ${fetchRetries} failed: ${error.message}`,
+                  );
+
+                  if (fetchRetries <= maxFetchRetries) {
+                    // Wait before retry, increasing delay for each retry
+                    const delayMs = 1000 * fetchRetries;
+                    console.log(`Retrying fetch in ${delayMs}ms...`);
+                    await new Promise((resolve) =>
+                      setTimeout(resolve, delayMs),
+                    );
+
+                    // Try to reconnect before retrying
+                    try {
+                      await this.reconnect();
+                      await this.connection.mailboxOpen(
+                        decodeURIComponent(id).replace(/\:/gm, '/'),
+                      );
+                    } catch (reconnectError) {
+                      console.error(
+                        `Failed to reconnect: ${reconnectError.message}`,
+                      );
+                      // Attempt another reconnection with more delay
+                      try {
+                        await new Promise((resolve) =>
+                          setTimeout(resolve, 2000),
+                        );
+                        await this.reconnect();
+                        await this.connection.mailboxOpen(
+                          decodeURIComponent(id).replace(/\:/gm, '/'),
+                        );
+                        console.log(
+                          'Reconnection successful on second attempt',
+                        );
+                      } catch (secondReconnectError) {
+                        console.error(
+                          `Second reconnection attempt failed: ${secondReconnectError.message}`,
+                        );
+                        // Continue anyway, the next fetch attempt will fail gracefully
+                      }
+                    }
+                  } else {
+                    console.error(
+                      `All fetch retries failed for range ${range}`,
+                    );
+                    // Try one final reconnect before giving up
+                    try {
+                      console.log('Attempting final reconnection...');
+                      await new Promise((resolve) => setTimeout(resolve, 3000));
+                      await this.reconnect();
+                      await this.connection.mailboxOpen(
+                        decodeURIComponent(id).replace(/\:/gm, '/'),
+                      );
+                      console.log(
+                        'Final reconnection successful, but returning empty result for this fetch',
+                      );
+                    } catch (finalReconnectError) {
+                      console.error(
+                        `Final reconnection attempt failed: ${finalReconnectError.message}`,
+                      );
+                    }
+                    // Return empty result instead of crashing
+                    return {
+                      data: [],
+                      meta: {
+                        page,
+                        total: mesagesTotal,
+                        totalPages: pages,
+                        perPage,
+                      },
+                    };
+                  }
+                }
+              }
 
               // Variable to store the results
               let result: {
@@ -396,6 +547,8 @@ export class Imap {
                     .map((b) => b.trim()),
                 ),
             );
+
+            headers.internal = parseInternalHeaders(headers);
 
             // Generate a preview of the message body by stripping HTML tags,
             // replacing new lines with spaces, and trimming the result
@@ -557,6 +710,68 @@ export class Imap {
       };
     } catch (error) {
       console.error(`Error accessing mailbox: ${error.message}`);
+      return null;
+    }
+  }
+
+  // Method to safely execute IMAP fetch operations with proper error handling
+  private async safeFetch(
+    range: string,
+    options: any,
+    id: string,
+    retryCount: number = 0,
+  ): Promise<any> {
+    const maxRetries = 3;
+    try {
+      // Ensure we have a valid connection
+      if (!this.connection.authenticated) {
+        await this.reconnect();
+        try {
+          await this.connection.mailboxOpen(
+            decodeURIComponent(id).replace(/\:/gm, '/'),
+          );
+        } catch (error) {
+          console.error(
+            `Failed to open mailbox after reconnect: ${error.message}`,
+          );
+        }
+      }
+
+      return await this.connection.fetch(range, options);
+    } catch (error) {
+      console.error(
+        `Fetch operation failed (attempt ${retryCount + 1}): ${error.message}`,
+      );
+
+      if (retryCount < maxRetries) {
+        // Exponential backoff delay
+        const delayMs = 1000 * Math.pow(2, retryCount);
+        console.log(`Retrying fetch in ${delayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+
+        // Force reconnection for network errors
+        if (
+          error.code === 'ETIMEDOUT' ||
+          error.code === 'ECONNRESET' ||
+          error.code === 'EPIPE' ||
+          !this.connection.authenticated
+        ) {
+          try {
+            await this.reconnect();
+            await this.connection.mailboxOpen(
+              decodeURIComponent(id).replace(/\:/gm, '/'),
+            );
+          } catch (reconnectError) {
+            console.error(`Reconnection failed: ${reconnectError.message}`);
+          }
+        }
+
+        // Recursive retry with incremented counter
+        return this.safeFetch(range, options, id, retryCount + 1);
+      }
+
+      // If we've exhausted retries, return null to handle gracefully
+      console.error(`All fetch retries exhausted for range ${range}`);
       return null;
     }
   }

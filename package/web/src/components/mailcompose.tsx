@@ -5,22 +5,21 @@ import {
   PaperAirplaneIcon,
   XMarkIcon,
   PaperClipIcon,
-  TrashIcon,
   ChevronDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "./ui/button";
-import { Card, CardContent } from "./ui/card";
+import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { RichTextEditor } from "./ui/rich-text-editor";
 import { Avatar } from "./ui/avatar";
+import { TagInput } from "./ui/tag-input";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/server/trpc";
 import { Spinner } from "./ui/spinner";
 import { useRouter } from "next/navigation";
 
 // TODO: Add contact integration
-// TODO: Fix multi-recipient input
 
 // Mail compose component properties interface
 interface MailComposeProps {
@@ -162,21 +161,6 @@ export default function MailCompose({
     setAttachments(attachments.filter((_, i) => i !== index));
   };
 
-  // Function to handle recipient input change
-  // TODO: Fix multi-recipient input
-  const handleRecipientChange = (
-    value: string,
-    setter: React.Dispatch<React.SetStateAction<string[]>>
-  ) => {
-    // Split by comma and clean up whitespace
-    const recipients = value
-      .split(",")
-      .map((email) => email.trim())
-      .filter((email) => email);
-
-    setter(recipients);
-  };
-
   // Function to handle sending the email
   const handleSend = async () => {
     try {
@@ -255,11 +239,11 @@ export default function MailCompose({
             <div className="w-20 text-sm text-gray-600 dark:text-gray-300">
               To:
             </div>
-            <Input
-              className="flex-1"
-              value={to.join(", ")}
-              onChange={(e) => handleRecipientChange(e.target.value, setTo)}
+            <TagInput
+              tags={to}
+              setTags={setTo}
               placeholder="recipient@example.com"
+              className="flex-1"
             />
             <Button
               variant="ghost"
@@ -282,11 +266,11 @@ export default function MailCompose({
                 <div className="w-20 text-sm text-gray-600 dark:text-gray-300">
                   Cc:
                 </div>
-                <Input
-                  className="flex-1"
-                  value={cc.join(", ")}
-                  onChange={(e) => handleRecipientChange(e.target.value, setCc)}
+                <TagInput
+                  tags={cc}
+                  setTags={setCc}
                   placeholder="cc@example.com"
+                  className="flex-1"
                 />
               </div>
 
@@ -294,13 +278,11 @@ export default function MailCompose({
                 <div className="w-20 text-sm text-gray-600 dark:text-gray-300">
                   Bcc:
                 </div>
-                <Input
-                  className="flex-1"
-                  value={bcc.join(", ")}
-                  onChange={(e) =>
-                    handleRecipientChange(e.target.value, setBcc)
-                  }
+                <TagInput
+                  tags={bcc}
+                  setTags={setBcc}
                   placeholder="bcc@example.com"
+                  className="flex-1"
                 />
               </div>
             </>
