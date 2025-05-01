@@ -19,6 +19,7 @@ import {
 } from 'src/utils/encryption';
 import { ErrorResponse, OkResponse } from 'src/utils/response';
 import { isEmail, isPort, isStrongPassword } from 'validator';
+import { getTosUrl, getLogoUrl, getPrivacyUrl } from 'src/utils/web/urldef';
 
 // Service for handling user-related functionality
 @Injectable()
