@@ -572,6 +572,7 @@ export class UserService {
 
     // Loop through each mail account and re-encrypt the password
     for (const account of mailAccounts) {
+      // Find the password in the database
       const mailAccountDetails = await Repo.mailAccount.findOne({
         where: {
           id: account.id,
@@ -579,17 +580,19 @@ export class UserService {
         select: ['password'],
       });
 
+      // Return error if mail account not found
       if (!mailAccountDetails) continue;
 
+      // Decrypt the password using the old encryption key
       const decrypted = decryptMailPassword(
         encryptionKey,
         mailAccountDetails.password,
       );
 
+      // Encrypt the password using the new encryption key
       account.password = encryptMailPassword(newEncryptionKey, decrypted);
 
-      console.log(decrypted);
-
+      // Save the changes to the repository
       await Repo.mailAccount.save(account);
     }
   }
