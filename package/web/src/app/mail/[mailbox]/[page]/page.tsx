@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { formatMailDate } from "@/utils/dateparser";
 import Link from "next/link";
 import { MailMessage } from "./client";
+import { MailDock } from "./dock";
 
 export default async function Page(props: {
   params: Promise<{
@@ -53,7 +54,7 @@ export default async function Page(props: {
 
   return (
     <div className="w-full h-full flex flex-row gap-5 p-5 bg-gray-50 dark:bg-gray-900">
-      <Dock active={"/mail/" + mailbox} />
+      <MailDock mailbox={mailbox} accountId={accountId} />
       <Mailbox
         boxId={mailbox}
         page={page}

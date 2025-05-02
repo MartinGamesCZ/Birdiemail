@@ -14,6 +14,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Card } from "./ui/card";
 import { Mailbox } from "@/types/Mailbox";
+import { getCookie } from "@/utils/cookie";
+import { trpc } from "@/server/trpc";
+import { useQuery } from "@tanstack/react-query";
 
 const Links = [
   {
