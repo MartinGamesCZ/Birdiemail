@@ -306,7 +306,12 @@ const appRouter = t.router({
       messageId: z.string(),
     })).output(z.object({
       id: z.string(),
-    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    privacyMailingListUnsubscribe: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    })).output(z.void()).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   adminRouter: t.router({
     isAuthorized: publicProcedure.output(z.object({

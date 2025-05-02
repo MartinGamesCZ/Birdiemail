@@ -22,6 +22,8 @@ import {
   ArrowTurnLeftUpIcon,
   ArrowTurnUpLeftIcon,
   ArrowTurnUpRightIcon,
+  BellAlertIcon,
+  BellIcon,
   CodeBracketIcon,
   DocumentTextIcon,
   EnvelopeIcon,
@@ -38,6 +40,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, createElement } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "react-toastify";
+import { findUnsubscribeLink } from "@/utils/privacy/unsubscribe";
 
 function MailToolbar(props: {
   accountId: string;
@@ -53,6 +57,7 @@ function MailToolbar(props: {
     };
     body: string;
     flags: string[];
+    headers: Record<string, string>;
   };
   special?: string;
   mailboxes: {
@@ -256,6 +261,49 @@ function MailToolbar(props: {
           );
         }),
       disabled: loadingActions.raw,
+    },
+    {
+      id: "divider3",
+      type: "divider",
+    },
+    {
+      id: "unsubscribe",
+      icon: BellAlertIcon,
+      label: loadingActions.unsubscribe
+        ? "Loading..."
+        : "Unsubscribe from mailing list",
+      onClick: () => {
+        if (!confirm("Unsubscribe from this mailing list?")) return;
+
+        const unsubscribeLink = props.message.headers["List-Unsubscribe"];
+
+        if (!unsubscribeLink) {
+          const foundLink = findUnsubscribeLink(props.message.body);
+
+          if (!foundLink) return toast.error("No unsubscribe link found");
+
+          // TODO: Add unsafe and inacurate link warning
+
+          window.open(foundLink.href, "_blank");
+          return;
+        }
+        if (unsubscribeLink.includes("mailto:"))
+          return alert("Mailto links are not supported yet");
+
+        handleAction("unsubscribe", async () => {
+          await trpc.mailRouter.privacyMailingListUnsubscribe.mutate({
+            accountId: props.accountId,
+            mailbox: props.mailbox,
+            messageId: props.messageId,
+          });
+
+          toast.success("Unsubscribed successfully");
+        });
+      },
+      disabled:
+        loadingActions.unsubscribe ||
+        (!props.message.headers["List-Unsubscribe"] &&
+          !findUnsubscribeLink(props.message.body)),
     },
   ];
 
@@ -481,6 +529,8 @@ export function MailMessage(props: {
       m.name === decodeURIComponent(props.mailbox) ||
       m.flags.includes(decodeURIComponent(props.mailbox).replace("@", "\\"))
   );
+
+  console.log(data);
 
   return isLoading || mailboxesLoading || !data ? (
     <Spinner fullScreen color="primary" size="lg" />

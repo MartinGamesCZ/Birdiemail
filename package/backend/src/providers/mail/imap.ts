@@ -1,7 +1,7 @@
 import { ImapFlow } from 'imapflow';
 import { extract } from 'letterparser';
 import { convert } from 'html-to-text';
-import { parseInternalHeaders } from './headers';
+import { parseInternalHeaders, parseMailHeaders } from './headers';
 
 // Variable to store active IMAP sessions for reuse
 let sessions: {
@@ -457,17 +457,9 @@ export class Imap {
                   msg.flags.forEach((flag) => flags.push(flag));
 
                   // Create a headers object from the message headers
-                  const headers = Object.fromEntries(
-                    msg.headers
-                      .toString()
-                      .split('\n')
-                      .map((a) =>
-                        a
-                          .trim()
-                          .split(': ')
-                          .map((b) => b.trim()),
-                      ),
-                  );
+                  const headers = parseMailHeaders(
+                    msg.headers.toString(),
+                  ) as any;
 
                   // Parse internal headers
                   headers.internal = parseInternalHeaders(headers);
@@ -558,17 +550,7 @@ export class Imap {
             msg.flags.forEach((flag) => flags.push(flag));
 
             // Create a headers object from the message headers
-            const headers = Object.fromEntries(
-              msg.headers
-                .toString()
-                .split('\n')
-                .map((a) =>
-                  a
-                    .trim()
-                    .split(': ')
-                    .map((b) => b.trim()),
-                ),
-            );
+            const headers = parseMailHeaders(msg.headers.toString()) as any;
 
             // Parse internal headers
             headers.internal = parseInternalHeaders(headers);

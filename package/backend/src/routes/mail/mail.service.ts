@@ -6,6 +6,7 @@ import { Imap } from 'src/providers/mail/imap';
 import { Smtp } from 'src/providers/mail/smtp';
 import { decryptMailPassword } from 'src/utils/encryption';
 import { UserService } from '../user/user.service';
+import { OkResponse } from 'src/utils/response';
 
 @Injectable()
 export class MailService {
@@ -457,6 +458,65 @@ export class MailService {
 
     // Permanently delete the email message from the specified mailbox
     return await (await connection.mailbox(mailbox))?.delete(messageId);
+  }
+
+  // PRIVACY
+  // Function to unsubscribe from a mailing list
+  async privacyMailingListUnsubscribe(
+    user: UserEntity,
+    encryptionKey: string,
+    accountId: string,
+    mailbox: string,
+    messageId: string,
+  ) {
+    // Return if user or encryptionKey is not provided
+    if (!user) return;
+    if (!encryptionKey) return;
+
+    // Find the mail account associated with the user
+    const mailAccount = await Repo.mailAccount.findOne({
+      where: {
+        id: accountId,
+        user: {
+          id: user.id,
+        },
+      },
+      relations: ['mailServer'],
+      select: ['id', 'email', 'password', 'mailServer'],
+    });
+
+    // Return if mail account is not found
+    if (!mailAccount) return;
+
+    // Establish a connection to the IMAP server
+    const connection = await this.establishImapConnection(
+      mailAccount,
+      encryptionKey,
+    );
+
+    // Get the email message from the specified mailbox
+    const message: any = await (
+      await connection.mailbox(mailbox)
+    )?.message(messageId);
+
+    // Extract the unsubscribe link from the email message
+    const unsubscribeLink = message.headers['List-Unsubscribe']
+      ?.split('<')[1]
+      ?.split('>')[0];
+    const unsubscribeData = Object.fromEntries([
+      message.headers['List-Unsubscribe-Post']?.split('='),
+    ]);
+
+    // Send a POST request to the unsubscribe link with the unsubscribe data
+    const { status } = await fetch(unsubscribeLink, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(unsubscribeData),
+    });
+
+    return;
   }
 
   // Function to establish a connection to the IMAP server
