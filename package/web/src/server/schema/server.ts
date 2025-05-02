@@ -163,6 +163,18 @@ const appRouter = t.router({
         status: z.literal('error'),
         message: z.string(),
       }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    updateAccount: publicProcedure.input(z.object({
+      name: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
     ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({

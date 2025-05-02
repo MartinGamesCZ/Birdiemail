@@ -555,6 +555,35 @@ export class UserService {
     return session;
   }
 
+  // Function to update account details
+  async updateAccount(
+    user: UserEntity,
+    name: string,
+    // email: string, --> TODO
+  ) {
+    // Check if the name is valid
+    if (!name || name.length < 3 || name.length > 128)
+      return ErrorResponse('Invalid name');
+
+    // Check if the user is valid
+    if (!user) return ErrorResponse('User not found');
+
+    // Update user properties
+    user.name = name;
+    user.updatedAt = new Date();
+
+    // Save the changes to the repository and handle any errors
+    const res = await Repo.user.save(user).catch((e) => ({
+      error: e.message,
+    }));
+
+    // Return error if saving failed
+    if ('error' in res) return ErrorResponse(res.error);
+
+    // Return success response
+    return OkResponse({});
+  }
+
   // Function to re-encrypt mail passwords
   private async reEncryptMailPasswords(
     user: UserEntity,
