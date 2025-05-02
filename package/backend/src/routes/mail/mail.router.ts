@@ -338,4 +338,34 @@ export class MailRouter {
       data.accountId,
     );
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    }),
+    output: z.object({
+      id: z.string(),
+    }),
+  })
+  async deleteMailMessage(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      mailbox: string;
+      messageId: string;
+    },
+  ) {
+    // Use the mail service to delete the email message
+    return await this.mailService.deleteMessage(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
+    );
+  }
 }

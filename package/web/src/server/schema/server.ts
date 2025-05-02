@@ -299,7 +299,14 @@ const appRouter = t.router({
         name: z.string(),
         flags: z.array(z.string()),
       }),
-    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    deleteMailMessage: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    })).output(z.object({
+      id: z.string(),
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   adminRouter: t.router({
     isAuthorized: publicProcedure.output(z.object({

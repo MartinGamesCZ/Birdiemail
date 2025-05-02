@@ -730,6 +730,30 @@ export class Imap {
             };
           });
         },
+        delete: async (id: string) => {
+          return await this.safeExec(async () => {
+            // Attempt to connect to the server
+            await this.connect();
+
+            // Search for the message by ID
+            const searchResults = await this.connection.search({
+              uid: id,
+            });
+
+            // If no results, return null
+            if (!searchResults || searchResults.length < 1) {
+              return null;
+            }
+
+            // Delete the message from the mailbox
+            await this.connection.messageDelete(searchResults[0].toString());
+
+            // Return the message ID
+            return {
+              id: searchResults[0].toString(),
+            };
+          });
+        },
       };
     } catch (error) {
       console.error(`Error accessing mailbox: ${error.message}`);

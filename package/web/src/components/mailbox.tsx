@@ -69,9 +69,9 @@ export default function Mailbox(props: {
         page: Number(props.page),
       }),
     retryDelay: 4000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60000,
   });
-
-  console.log(messages);
 
   // State to manage the currently selected account
   const [currentAccount, setCurrentAccount] = useState<Account>(

@@ -422,6 +422,43 @@ export class MailService {
     return res;
   }
 
+  // Function to delete an email message permanently
+  async deleteMessage(
+    user: UserEntity,
+    encryptionKey: string,
+    accountId: string,
+    mailbox: string,
+    messageId: string,
+  ) {
+    // Return if user or encryptionKey is not provided
+    if (!user) return [];
+    if (!encryptionKey) return [];
+
+    // Find the mail account associated with the user
+    const mailAccount = await Repo.mailAccount.findOne({
+      where: {
+        id: accountId,
+        user: {
+          id: user.id,
+        },
+      },
+      relations: ['mailServer'],
+      select: ['id', 'email', 'password', 'mailServer'],
+    });
+
+    // Return if mail account is not found
+    if (!mailAccount) return [];
+
+    // Establish a connection to the IMAP server
+    const connection = await this.establishImapConnection(
+      mailAccount,
+      encryptionKey,
+    );
+
+    // Permanently delete the email message from the specified mailbox
+    return await (await connection.mailbox(mailbox))?.delete(messageId);
+  }
+
   // Function to establish a connection to the IMAP server
   private async establishImapConnection(
     mailAccount: MailAccountEntity,
