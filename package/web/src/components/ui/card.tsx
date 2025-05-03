@@ -17,7 +17,7 @@ export function Card({
     <div
       className={`shadow-sm rounded-xl ${
         !noBorderStyling
-          ? "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+          ? "border border-gray-200 dark:border-gray-500/20 bg-white dark:bg-gray-900/10"
           : ""
       } ${className}`}
       onClick={onClick}

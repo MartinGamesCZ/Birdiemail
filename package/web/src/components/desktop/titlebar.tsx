@@ -76,7 +76,7 @@ export function Titlebar({ title = "Birdiemail", minimal }: TitlebarProps) {
 
   return (
     <>
-      <div className="flex justify-between items-center w-full h-10 max-h-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 select-none">
+      <div className="flex justify-between items-center w-full h-10 max-h-10 bg-white dark:bg-gray-900/10 border-b border-gray-200 dark:border-gray-700/40 select-none">
         <div className="flex items-center pl-6 w-1/4 app-drag-container">
           <span className="font-medium text-md">{title}</span>
         </div>

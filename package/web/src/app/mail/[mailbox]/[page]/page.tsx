@@ -28,7 +28,7 @@ export default async function Page(props: {
 
   if (mailAccounts.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-5">
+      <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-black p-5">
         <Card className="max-w-md w-full">
           <CardHeader>
             <h2 className="text-2xl font-semibold text-center">
@@ -53,7 +53,7 @@ export default async function Page(props: {
     ((await getCookie("current_account_id")) || mailAccounts[0]?.id) ?? "";
 
   return (
-    <div className="w-full h-full flex flex-row gap-5 p-5 bg-gray-50 dark:bg-gray-900">
+    <div className="w-full h-full flex flex-row gap-5 p-5 bg-gray-50 dark:bg-black">
       <MailDock mailbox={mailbox} accountId={accountId} />
       <Mailbox
         boxId={mailbox}
