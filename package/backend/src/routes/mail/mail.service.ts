@@ -501,20 +501,24 @@ export class MailService {
 
     // Extract the unsubscribe link from the email message
     const unsubscribeLink = message.headers['List-Unsubscribe']
-      ?.split('<')[1]
-      ?.split('>')[0];
+      .trim()
+      .split(',')
+      .map((l) => l.trim().replace(/\<(.*?)\>/gm, '$1'));
     const unsubscribeData = Object.fromEntries([
       message.headers['List-Unsubscribe-Post']?.split('='),
     ]);
 
     // Send a POST request to the unsubscribe link with the unsubscribe data
-    const { status } = await fetch(unsubscribeLink, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+    const { status } = await fetch(
+      unsubscribeLink.find((l) => l.startsWith('http')),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams(unsubscribeData),
       },
-      body: new URLSearchParams(unsubscribeData),
-    });
+    );
 
     return;
   }

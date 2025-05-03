@@ -287,7 +287,12 @@ function MailToolbar(props: {
           window.open(foundLink.href, "_blank");
           return;
         }
-        if (unsubscribeLink.includes("mailto:"))
+        if (
+          !unsubscribeLink
+            .split(",")
+            .map((l) => l.trim().replace(/\<(.*?)\>/gm, "$1"))
+            .some((l) => l.trim().startsWith("http"))
+        )
           return alert("Mailto links are not supported yet");
 
         handleAction("unsubscribe", async () => {
