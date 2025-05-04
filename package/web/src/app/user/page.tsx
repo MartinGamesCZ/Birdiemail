@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   UserCircleIcon,
   LockClosedIcon,
@@ -73,10 +73,21 @@ export default function Page() {
 
   const router = useRouter();
 
-  const handleProfileUpdate = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // TODO
+    const res = await trpc.userRouter.updateAccount.mutate({
+      name: newAccountName,
+    });
+
+    if (res.status !== "ok") {
+      toast.error(res.message);
+      return;
+    }
+
+    toast.success("Profile updated successfully");
+
+    refetchUser();
   };
 
   const handleUpdatePassword = async (e?: React.FormEvent) => {
@@ -124,6 +135,13 @@ export default function Page() {
     refetchMailAccounts();
   };
 
+  useEffect(() => {
+    if (user && user.status === "ok") {
+      setNewAccountName(user.data.name);
+      setNewAccountEmail(user.data.email);
+    }
+  }, [user]);
+
   if (userLoading || mailAccountsLoading) {
     return <p>Loading...</p>;
   }
@@ -162,17 +180,19 @@ export default function Page() {
                       <Label htmlFor="username">Username</Label>
                       <Input
                         id="username"
-                        value={user.data.name}
+                        value={newAccountName}
                         onChange={(e) => setNewAccountName(e.target.value)}
                       />
                     </div>
                     <div>
                       <Label htmlFor="email">Email</Label>
+                      {/* Disabled for now */}
                       <Input
                         id="email"
                         type="email"
                         value={user.data.email}
                         onChange={(e) => setNewAccountEmail(e.target.value)}
+                        disabled={true}
                       />
                     </div>
                   </div>

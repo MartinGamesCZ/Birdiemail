@@ -345,4 +345,34 @@ export class UserRouter {
       data.newPassword,
     );
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      name: z.string(),
+    }),
+    output: z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
+    ]),
+  })
+  async updateAccount(
+    @Input()
+    data: {
+      name: string;
+    },
+    @Ctx() context: any,
+  ) {
+    // Check if the user is authenticated
+    if (!context.authorized) return ErrorResponse('Unauthorized');
+
+    // Use the user service to update the user's account name
+    return await this.userService.updateAccount(context.user, data.name);
+  }
 }

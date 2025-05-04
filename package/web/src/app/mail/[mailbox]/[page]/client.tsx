@@ -3,6 +3,12 @@
 import { Mailview } from "@/components/mailview";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { trpc } from "@/server/trpc";
 import { Mailbox } from "@/types/Mailbox";
@@ -16,10 +22,14 @@ import {
   ArrowTurnLeftUpIcon,
   ArrowTurnUpLeftIcon,
   ArrowTurnUpRightIcon,
+  BellAlertIcon,
+  BellIcon,
   CodeBracketIcon,
   DocumentTextIcon,
   EnvelopeIcon,
   ExclamationTriangleIcon,
+  FolderArrowDownIcon,
+  FolderIcon,
   ForwardIcon,
   PaperClipIcon,
   StarIcon,
@@ -30,6 +40,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, createElement } from "react";
 import { createPortal } from "react-dom";
+import { toast } from "react-toastify";
+import { findUnsubscribeLink } from "@/utils/privacy/unsubscribe";
 
 function MailToolbar(props: {
   accountId: string;
@@ -45,7 +57,13 @@ function MailToolbar(props: {
     };
     body: string;
     flags: string[];
+    headers: Record<string, string>;
   };
+  special?: string;
+  mailboxes: {
+    name: string;
+    flags: string[];
+  }[];
 }) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
@@ -53,6 +71,10 @@ function MailToolbar(props: {
     {}
   );
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
+  const [selectedMailbox, setSelectedMailbox] = useState<string | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
 
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -165,6 +187,16 @@ function MailToolbar(props: {
         }),
       disabled: loadingActions["mark-unread"],
     },
+    {
+      id: "move",
+      icon: FolderIcon,
+      label: loadingActions.move ? "Loading..." : "Move to another folder",
+      onClick: () =>
+        handleAction("move", async () => {
+          setMoveDialogOpen(true);
+        }),
+      disabled: loadingActions.move,
+    },
     /*{
       id: "report",
       icon: ExclamationTriangleIcon,
@@ -180,16 +212,28 @@ function MailToolbar(props: {
     {
       id: "delete",
       icon: TrashIcon,
-      label: loadingActions.delete ? "Deleting..." : "Delete",
+      label: loadingActions.delete
+        ? "Deleting..."
+        : props.special == "\\Trash"
+        ? "Delete permanently"
+        : "Delete",
       className: "text-red-500",
       onClick: () =>
         handleAction("delete", async () => {
-          await trpc.mailRouter.moveMailMessage.mutate({
-            destination: "[Gmail]/Koš",
-            messageId: props.messageId,
-            mailbox: props.mailbox,
-            accountId: props.accountId,
-          });
+          if (props.special == "\\Trash") {
+            await trpc.mailRouter.deleteMailMessage.mutate({
+              messageId: props.messageId,
+              mailbox: props.mailbox,
+              accountId: props.accountId,
+            });
+          } else {
+            await trpc.mailRouter.moveMailMessage.mutate({
+              destination: "[Gmail]/Koš",
+              messageId: props.messageId,
+              mailbox: props.mailbox,
+              accountId: props.accountId,
+            });
+          }
 
           queryClient.refetchQueries({
             queryKey: ["mailbox", props.accountId, props.mailbox],
@@ -218,6 +262,54 @@ function MailToolbar(props: {
         }),
       disabled: loadingActions.raw,
     },
+    {
+      id: "divider3",
+      type: "divider",
+    },
+    {
+      id: "unsubscribe",
+      icon: BellAlertIcon,
+      label: loadingActions.unsubscribe
+        ? "Loading..."
+        : "Unsubscribe from mailing list",
+      onClick: () => {
+        if (!confirm("Unsubscribe from this mailing list?")) return;
+
+        const unsubscribeLink = props.message.headers["List-Unsubscribe"];
+
+        if (!unsubscribeLink) {
+          const foundLink = findUnsubscribeLink(props.message.body);
+
+          if (!foundLink) return toast.error("No unsubscribe link found");
+
+          // TODO: Add unsafe and inacurate link warning
+
+          window.open(foundLink.href, "_blank");
+          return;
+        }
+        if (
+          !unsubscribeLink
+            .split(",")
+            .map((l) => l.trim().replace(/\<(.*?)\>/gm, "$1"))
+            .some((l) => l.trim().startsWith("http"))
+        )
+          return alert("Mailto links are not supported yet");
+
+        handleAction("unsubscribe", async () => {
+          await trpc.mailRouter.privacyMailingListUnsubscribe.mutate({
+            accountId: props.accountId,
+            mailbox: props.mailbox,
+            messageId: props.messageId,
+          });
+
+          toast.success("Unsubscribed successfully");
+        });
+      },
+      disabled:
+        loadingActions.unsubscribe ||
+        (!props.message.headers["List-Unsubscribe"] &&
+          !findUnsubscribeLink(props.message.body)),
+    },
   ];
 
   const handleMouseEnter = (id: string) => {
@@ -234,6 +326,81 @@ function MailToolbar(props: {
 
   return (
     <div className="mr-4 flex flex-row items-center px-1 py-2 mb-4 bg-gray-50 dark:bg-gray-800/40 rounded-md">
+      <Dialog open={moveDialogOpen} onOpenChange={setMoveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="sm:max-w-[500px]">Move to</DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4 flex flex-col gap-2">
+            {props.mailboxes.map((mailbox) => (
+              <div
+                key={mailbox.name}
+                className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800"
+                onClick={() => setSelectedMailbox(mailbox.name)}
+              >
+                <input
+                  type="radio"
+                  id={`mailbox-${mailbox.name}`}
+                  name="mailbox"
+                  value={mailbox.name}
+                  checked={selectedMailbox === mailbox.name}
+                  onChange={() => setSelectedMailbox(mailbox.name)}
+                  className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                />
+                <FolderArrowDownIcon className="h-5 w-5 text-gray-500" />
+                <label
+                  htmlFor={`mailbox-${mailbox.name}`}
+                  className="text-md font-medium text-gray-700 dark:text-gray-300 cursor-pointer flex-1"
+                >
+                  {mailbox.name}
+                </label>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={async () => {
+                if (!selectedMailbox) return;
+
+                setIsMoving(true);
+                try {
+                  await trpc.mailRouter.moveMailMessage.mutate({
+                    destination: selectedMailbox,
+                    messageId: props.messageId,
+                    mailbox: props.mailbox,
+                    accountId: props.accountId,
+                  });
+
+                  queryClient.refetchQueries({
+                    queryKey: ["mailbox", props.accountId, props.mailbox],
+                  });
+
+                  const newUrl = new URL(location.href);
+                  newUrl.searchParams.delete("messageId");
+
+                  router.push(newUrl.href);
+                } finally {
+                  setIsMoving(false);
+                  setMoveDialogOpen(false);
+                }
+              }}
+              disabled={!selectedMailbox || isMoving}
+            >
+              {isMoving ? (
+                <>
+                  <Spinner size="sm" className="mr-2" />
+                  Moving...
+                </>
+              ) : (
+                "Move"
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {toolbarItems.map((item) =>
         item.type === "divider" ? (
           <div
@@ -354,7 +521,23 @@ export function MailMessage(props: {
         `<div class="gmail_quote gmail_quote_container">`
       )?.[0] ?? "";
 
-  return isLoading || !data ? (
+  const { data: mailboxes, isLoading: mailboxesLoading } = useQuery({
+    queryKey: ["mailboxes", props.accountId],
+    queryFn: async () =>
+      await trpc.mailRouter.getMailboxes.query({
+        accountId: props.accountId,
+      }),
+  });
+
+  const mailbox = mailboxes?.find(
+    (m) =>
+      m.name === decodeURIComponent(props.mailbox) ||
+      m.flags.includes(decodeURIComponent(props.mailbox).replace("@", "\\"))
+  );
+
+  console.log(data);
+
+  return isLoading || mailboxesLoading || !data ? (
     <Spinner fullScreen color="primary" size="lg" />
   ) : (
     <div className="w-full h-full overflow-y-auto">
@@ -386,7 +569,14 @@ export function MailMessage(props: {
         </div>
       </div>
 
-      {!props.isInChain && <MailToolbar {...props} message={data} />}
+      {!props.isInChain && (
+        <MailToolbar
+          {...props}
+          message={data}
+          mailboxes={mailboxes ?? []}
+          special={mailbox?.flags?.[0]}
+        />
+      )}
 
       {data.files.length > 0 && (
         <div className="mt-4 mb-4 mr-4">

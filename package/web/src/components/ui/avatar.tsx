@@ -59,7 +59,7 @@ export function Avatar({
         getColorFromName(name),
         sizeClasses[size],
         active &&
-          "ring-2 ring-offset-2 ring-blue-500 dark:ring-offset-gray-900",
+          "ring-2 ring-offset-2 ring-blue-500 dark:ring-blue-800 dark:ring-offset-gray-900",
         className
       )}
       {...props}

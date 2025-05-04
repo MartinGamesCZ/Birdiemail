@@ -163,6 +163,18 @@ const appRouter = t.router({
         status: z.literal('error'),
         message: z.string(),
       }),
+    ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    updateAccount: publicProcedure.input(z.object({
+      name: z.string(),
+    })).output(z.union([
+      z.object({
+        status: z.literal('ok'),
+        data: z.object({}),
+      }),
+      z.object({
+        status: z.literal('error'),
+        message: z.string(),
+      }),
     ])).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   mailRouter: t.router({
@@ -287,7 +299,19 @@ const appRouter = t.router({
         name: z.string(),
         flags: z.array(z.string()),
       }),
-    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
+    )).query(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    deleteMailMessage: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    })).output(z.object({
+      id: z.string(),
+    })).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any),
+    privacyMailingListUnsubscribe: publicProcedure.input(z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    })).output(z.void()).mutation(async () => "PLACEHOLDER_DO_NOT_REMOVE" as any)
   }),
   adminRouter: t.router({
     isAuthorized: publicProcedure.output(z.object({

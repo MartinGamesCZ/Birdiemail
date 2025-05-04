@@ -77,7 +77,7 @@ export function Mailview(props: { body: string }) {
       ref={iframeRef}
       srcDoc={html}
       scrolling="no"
-      className="border-none"
+      className="border-none bg-white rounded-md"
       style={{
         width: "calc(100% - 1rem)",
         minHeight: "100px",

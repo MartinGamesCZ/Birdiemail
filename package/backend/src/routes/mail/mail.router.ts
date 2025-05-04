@@ -338,4 +338,62 @@ export class MailRouter {
       data.accountId,
     );
   }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    }),
+    output: z.object({
+      id: z.string(),
+    }),
+  })
+  async deleteMailMessage(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      mailbox: string;
+      messageId: string;
+    },
+  ) {
+    // Use the mail service to delete the email message
+    return await this.mailService.deleteMessage(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
+    );
+  }
+
+  @UseMiddlewares(AuthMiddleware)
+  @Mutation({
+    input: z.object({
+      accountId: z.string(),
+      mailbox: z.string(),
+      messageId: z.string(),
+    }),
+    output: z.void(),
+  })
+  async privacyMailingListUnsubscribe(
+    @Ctx() context: any,
+    @Input()
+    data: {
+      accountId: string;
+      mailbox: string;
+      messageId: string;
+    },
+  ) {
+    // Use the mail service to unsubscribe from the mailing list
+    return await this.mailService.privacyMailingListUnsubscribe(
+      context.user,
+      context.encryptionKey,
+      data.accountId,
+      data.mailbox,
+      data.messageId,
+    );
+  }
 }

@@ -14,6 +14,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Card } from "./ui/card";
 import { Mailbox } from "@/types/Mailbox";
+import { getCookie } from "@/utils/cookie";
+import { trpc } from "@/server/trpc";
+import { useQuery } from "@tanstack/react-query";
 
 const Links = [
   {
@@ -102,7 +105,7 @@ export function Dock(props: { active: string }) {
             link.type === "section_with_gap" ? "mt-auto" : ""
           } ${
             link.type === "section_with_div"
-              ? "border-t-2 border-gray-200 dark:border-gray-700 pt-4"
+              ? "border-t-2 border-gray-200 dark:border-gray-900/10 pt-4"
               : ""
           }`}
           key={link.type}
