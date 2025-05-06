@@ -10,7 +10,9 @@ export function Mailview(props: { body: string }) {
   // Try to sanitize the email body
   try {
     // Sanitize the email body to prevent XSS attacks
-    html = sanitize(props.body, props.body);
+    html = sanitize(props.body, props.body, {
+      allowedSchemas: ["data", "http", "https", "mailto"],
+    });
   } catch (e) {
     // If sanitization fails, log the error and set a fallback HTML
     html = `<html><body><p>Failed to load email</p></body></html>`;

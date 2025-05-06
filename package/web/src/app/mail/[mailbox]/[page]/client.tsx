@@ -515,6 +515,14 @@ export function MailMessage(props: {
   let body =
     data?.body.split("---------- Forwarded message ---------")?.[0] ?? "";
 
+  body = body.replace(
+    /src="cid:(.*?)"/g,
+    (match, cid) =>
+      `src="data:${
+        data?.files?.find((f) => f.id === cid)?.type
+      };base64,${data?.files?.find((f) => f.id === cid)?.content}"`
+  );
+
   if (data?.subject.includes("Re:"))
     body =
       data?.body.split(
