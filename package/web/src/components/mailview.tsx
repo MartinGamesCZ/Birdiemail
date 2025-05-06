@@ -2,6 +2,9 @@
 
 import { sanitize } from "lettersanitizer";
 import { useEffect, useRef } from "react";
+import ical from "ical.js";
+import { Button } from "./ui/button";
+import Link from "next/link";
 
 // Mail content view component
 export function Mailview(props: { body: string }) {
@@ -72,6 +75,56 @@ export function Mailview(props: { body: string }) {
       };
     }
   }, [props.body]);
+
+  const vdom = new DOMParser().parseFromString(html, "text/html");
+  const rawText = vdom.body.innerText.trim();
+
+  // Parse calendar events (iCalendar format)
+  if (rawText.startsWith("BEGIN:VCALENDAR")) {
+    // Parse the iCalendar data
+    const parsed = ical
+      .parse(rawText)
+      .find(
+        (e: any) => typeof e != "string" && e.some((f: any) => f[0] == "vevent")
+      )
+      .find((e: any) => e[0] == "vevent")[1];
+
+    const [, , , title] = parsed.find((p: any) => p[0] == "summary");
+    const [, , , start] = parsed.find((p: any) => p[0] == "dtstart");
+    const [, , , end] = parsed.find((p: any) => p[0] == "dtend");
+    const [, , , location] = parsed.find((p: any) => p[0] == "location");
+
+    // TODO: Style
+    // TODO: Implement into Birdiemail calendar (replace google calendar)
+
+    return (
+      <div>
+        <h1>Calendar event</h1>
+        <p>{title}</p>
+        <Link
+          href={"#"}
+          target="_blank"
+          onClick={(e) => {
+            e.preventDefault();
+
+            navigator.clipboard.writeText(
+              `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+                title
+              )}&dates=${encodeURIComponent(
+                start.replace("-", "").replace(":", "")
+              )}/${encodeURIComponent(
+                end.replace("-", "").replace(":", "")
+              )}&details=${encodeURIComponent(
+                "Added from Birdiemail"
+              )}&location=${encodeURIComponent(location)}&sf=true&output=xml`
+            );
+          }}
+        >
+          Add into Google Calendar (copy link)
+        </Link>
+      </div>
+    );
+  }
 
   // Render the iframe with the sanitized HTML content
   return (
