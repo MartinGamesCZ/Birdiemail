@@ -557,18 +557,21 @@ export class Imap {
 
             // Generate a preview of the message body by stripping HTML tags,
             // replacing new lines with spaces, and trimming the result
-            const preview = convert(data.html ?? data.text ?? '', {
-              selectors: [
-                {
-                  selector: 'a',
-                  format: 'skip',
-                },
-                {
-                  selector: 'img',
-                  format: 'skip',
-                },
-              ],
-            })
+            const preview = convert(
+              data.html && data.html.length > 0 ? data.html : (data.text ?? ''),
+              {
+                selectors: [
+                  {
+                    selector: 'a',
+                    format: 'skip',
+                  },
+                  {
+                    selector: 'img',
+                    format: 'skip',
+                  },
+                ],
+              },
+            )
               .replace(/[\n\r]/g, ' ')
               .trim()
               .substring(0, 120);
@@ -582,7 +585,10 @@ export class Imap {
                 email: data.from?.address ?? '',
               },
               flags,
-              body: data.html ?? data.text ?? '',
+              body:
+                data.html && data.html.length > 0
+                  ? data.html
+                  : (data.text ?? ''),
               preview: preview.length < 1 ? (data.text ?? '') : (preview ?? ''),
               date: msg.envelope?.date ?? new Date(0),
               headers: headers,
