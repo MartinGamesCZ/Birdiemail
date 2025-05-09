@@ -1,4 +1,11 @@
-import { app, BrowserWindow, globalShortcut, ipcMain, Menu } from "electron";
+import {
+  app,
+  BrowserWindow,
+  globalShortcut,
+  ipcMain,
+  Menu,
+  shell,
+} from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { APP_URL } from "./config";
@@ -75,6 +82,13 @@ function createWindow() {
     if (!win) return;
 
     win.restore();
+  });
+
+  // Bind function to open link in the default browser
+  ipcMain.on("open-link", (_, url) => {
+    if (!win) return;
+
+    shell.openExternal(url);
   });
 
   // Bind Ctrl+Shift+I shortcut to open devtools page (/dev)
