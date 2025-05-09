@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { CogIcon, LinkIcon } from "@heroicons/react/24/outline";
+import { checkAppIsDesktop } from "@/utils/desktop/app";
 
 export default function Page() {
   // Link opening preference
@@ -48,7 +49,10 @@ export default function Page() {
               <div className="grid gap-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="open-in-app">Open Links in App</Label>
+                    <Label htmlFor="open-in-app">
+                      Open Links in App{" "}
+                      {!checkAppIsDesktop() && "(Desktop only)"}
+                    </Label>
                     <div className="text-sm text-muted-foreground">
                       When disabled, links will open in your default browser
                     </div>
@@ -57,6 +61,7 @@ export default function Page() {
                     id="open-in-app"
                     checked={openLinksInApp}
                     onCheckedChange={handleToggleChange}
+                    disabled={!checkAppIsDesktop()}
                   />
                 </div>
               </div>
