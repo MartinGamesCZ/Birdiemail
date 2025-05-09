@@ -5,32 +5,34 @@ import { useEffect, useRef } from "react";
 import ical from "ical.js";
 import { Button } from "./ui/button";
 import Link from "next/link";
+import { openLink } from "@/utils/desktop/app";
 
-// Mail content view component
 export function Mailview(props: { body: string }) {
   let html = "";
 
   // Try to sanitize the email body
   try {
-    // Sanitize the email body to prevent XSS attacks
     html = sanitize(props.body, props.body, {
       allowedSchemas: ["data", "http", "https", "mailto"],
     });
   } catch (e) {
-    // If sanitization fails, log the error and set a fallback HTML
     html = `<html><body><p>Failed to load email</p></body></html>`;
   }
 
-  // Email iframe reference
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
-    // Get the iframe element
     const iframe = iframeRef.current;
     if (!iframe) return;
 
-    // Function to resize the iframe based on its content
+    let resizeCount = 0;
+    const maxResizeCount = 3;
+
     const resizeIframe = () => {
+      if (resizeCount > maxResizeCount) return;
+
+      resizeCount++;
+
       if (!iframe.contentWindow || !iframe.contentDocument) return;
 
       // Reset to minimum height before measuring
@@ -39,41 +41,76 @@ export function Mailview(props: { body: string }) {
       // Get the height of the content
       const height =
         iframe.contentDocument.documentElement.scrollHeight ||
-        iframe.contentDocument.body.scrollHeight;
+        iframe.contentDocument.body?.scrollHeight;
 
-      // Set the height of the iframe
       iframe.style.height = `${height}px`;
     };
 
-    // Attach load event to the iframe
+    // Track the last click time to prevent multiple rapid clicks
+    let lastClickTime = 0;
+
+    const linkHandler = (e: MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Prevent multiple clicks within 500ms
+      const now = Date.now();
+      if (now - lastClickTime < 500) {
+        return;
+      }
+      lastClickTime = now;
+
+      const target = e.target as HTMLElement;
+      const href = target.closest("a")?.getAttribute("href");
+
+      if (href) {
+        openLink(href);
+      }
+
+      return false; // Prevent further handling
+    };
+
+    const attachLinkHandler = (doc: Document) => {
+      const links = doc.querySelectorAll("a");
+
+      links.forEach((link) => {
+        link.addEventListener("click", linkHandler);
+      });
+    };
+
+    const detachLinkHandler = (doc: Document) => {
+      const links = doc.querySelectorAll("a");
+
+      links.forEach((link) => {
+        link.removeEventListener("click", linkHandler);
+      });
+    };
+
     iframe.onload = () => {
-      // Resize the iframe after it loads
       resizeIframe();
 
       if (iframe.contentDocument) {
+        attachLinkHandler(iframe.contentDocument);
+
         // Set the font family for the iframe content
         iframe.contentDocument.head.innerHTML += `<style>@font-face { font-family: 'Plus Jakarta Sans'; src: url('${location.origin}/fonts/plus_jakarta_sans.ttf') format('truetype'); }</style>`;
         iframe.contentDocument.body.style.fontFamily = "Plus Jakarta Sans";
       }
     };
 
+    let i = null;
+
     // Resize the iframe when the content changes
     if (iframe.contentWindow) {
-      // Observe the iframe content for changes
-      const resizeObserver = new ResizeObserver(resizeIframe);
-
-      try {
-        // Observe the iframe body for changes
-        if (iframe.contentDocument && iframe.contentDocument.body) {
-          resizeObserver.observe(iframe.contentDocument.body);
-        }
-      } catch (e) {}
-
-      // Cleanup function to disconnect the observer
-      return () => {
-        resizeObserver.disconnect();
-      };
+      i = setInterval(() => {
+        resizeIframe();
+      }, 250);
     }
+    return () => {
+      if (i) clearInterval(i);
+
+      if (iframe.contentDocument) detachLinkHandler(iframe.contentDocument!);
+    };
   }, [props.body]);
 
   const vdom = new DOMParser().parseFromString(html, "text/html");
@@ -126,7 +163,6 @@ export function Mailview(props: { body: string }) {
     );
   }
 
-  // Render the iframe with the sanitized HTML content
   return (
     <iframe
       ref={iframeRef}
